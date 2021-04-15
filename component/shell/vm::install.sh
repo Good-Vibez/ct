@@ -32,6 +32,7 @@ COMMON_PACKAGES=(
   git
   htop
   make
+  curl
 )
 DEBIAN_APT_NEEDS=(
   build-essential
@@ -49,12 +50,10 @@ RUBY_DEPS_DEB=(
   libssl-dev
 )
 BREW_PACKAGES=(
+  ${COMMON_PACKAGES[@]}
+
   # System and gnu
-  gcc
-  make
-  ccache
   zlib
-  curl
   findutils
   grep
   gnu-sed
@@ -65,12 +64,11 @@ BREW_PACKAGES=(
   direnv
   pv
   nvim
-  git
+  gnupg
 
   # Dev/Workspace/Aesthetics
   fish
   tmux
-  htop
   lsd
 )
 
