@@ -7,13 +7,12 @@ main() {
   CDI::install:rbenv
   CDI::install:user_paths.ccache
   ui::doing "HMBRW"
-  CDI::user_init:load
   CDI::install:homebrew
-  ui::doing "HMBRW_PKGS"
-  brew:install "${BREW_PACKAGES[@]}"
   config::fish
   config::bash
   config::tmux
+  ui::doing "HMBRW_PKGS"
+  brew:install "${BREW_PACKAGES[@]}"
   ui::doing "OMF"
   CDI::install:omf
   ui::doing "CARGO"
@@ -38,6 +37,12 @@ DEBIAN_APT_NEEDS=(
   build-essential
   apt-utils
   dialog
+)
+DEBIAN_APT_KEPT_BACK=(
+  linux-headers-generic
+  linux-headers-virtual
+  linux-image-virtual
+  linux-virtual
 )
 PACMAN_AUR_NEEDS=(
   base-devel
@@ -76,6 +81,18 @@ ui::doing() {
   printf '==> %s\n' "$1"
 }
 
+file::line:add.uniq() {
+  file="$1"; shift;
+  line="$1"; shift;
+
+  if grep --fixed-strings --regexp "$line" "$file" >/dev/null 2>/dev/null
+  then
+    true
+  else
+    echo "$line" >>$file
+  fi
+}
+
 config::apt:sources() {
   ui::doing "Instal ubuntu apt sources"
   sudo tee /etc/apt/sources.list >/dev/null <<-'EOS'
@@ -110,14 +127,27 @@ config::fish() {
   end
 EOS
   tee $HOME/.config/fish/conf.d/vi.fish >/dev/null <<-'EOS'
-  set -U fish_key_bindings fish_vi_key_bindings
+  set -g fish_key_bindings fish_vi_key_bindings
+EOS
+  tee $HOME/.config/fish/conf.d/CDI::user_init.hook.fish >/dev/null <<-'EOS'
+  set -x fish_user_paths (string split0 <$HOME/.user_paths) $fish_user_paths
+  for command in (string split0 <$HOME/.user_init)
+    eval "$command" | source
+  end
 EOS
 }
 config::bash() {
-  tee -a $HOME/.bashrc >/dev/null <<-'EOS'
-  source $HOME/.user_paths
-  source $HOME/.user_init
+  tee $HOME/.user_init.bash >/dev/null <<-'EOS'
+  if test -f $HOME/.user_paths
+  then
+    export PATH="$(cat $HOME/.user_paths | tr \\000 :):$PATH"
+  fi
+  if test -f $HOME/.user_init
+  then
+    eval "$(cat $HOME/.user_init | tr \\000 \\n | bash)"
+  fi
 EOS
+  file::line:add.uniq $HOME/.bashrc source $HOME/.user_init.bash
 }
 config::tmux() {
   tee $HOME/.tmux.conf >/dev/null <<-'EOS'
@@ -126,7 +156,6 @@ config::tmux() {
   set -g status-style bg=colour24
   set -g status-left-style bg=colour162
   set -g status-right-style bg=colour17,fg=colour92
-  set -g default-shell /home/linuxbrew/.linuxbrew/bin/fish
   set -g default-terminal screen-256color
 EOS
 }
@@ -199,6 +228,7 @@ CDI::install:base_devel() {
       apt:install \
 	"${COMMON_PACKAGES[@]}" \
 	"${DEBIAN_APT_NEEDS[@]}" \
+	"${DEBIAN_APT_KEPT_BACK[@]}" \
 	"${RUBY_DEPS_DEB[@]}" \
       ;;
     (Arch)
@@ -210,17 +240,32 @@ CDI::install:base_devel() {
   esac
 }
 
+CDI::_:add() {
+  list="$1"; shift;
+  item="$1"; shift;
+
+  format="$(
+    if test -f "$HOME/.$list"
+    then
+      printf '%s' '\x00%s'
+    else
+      printf '%s' '%s'
+    fi
+  )"
+  printf "$format" "$item" |
+    tee -a "$HOME/.$list" |
+    tee /dev/null >/dev/null
+}
 CDI::user_paths:add() {
   extra_path="$1"; shift;
-  echo 'export PATH="'"$extra_path"':$PATH"' >> ~/.user_paths
+  CDI::_:add user_paths "$extra_path"
 }
 CDI::user_init:add.eval() {
   hook="$1"; shift;
-  echo 'eval "'"$hook"'"' >> ~/.user_init
+  CDI::_:add user_init "$hook"
 }
 CDI::user_init:load() {
-  source $HOME/.user_paths
-  source $HOME/.user_init
+  source $HOME/.user_init.bash
 }
 
 CDI::install:rbenv-build() {
@@ -238,7 +283,7 @@ CDI::install:rbenv() {
     cd ~/.rbenv && src/configure && make -C src
 
     CDI::user_paths:add "$HOME/.rbenv/bin"
-    CDI::user_init:add.eval '$(rbenv init -)'
+    CDI::user_init:add.eval 'rbenv init -'
     CDI::user_init:load
 
     CDI::install:rbenv-build
@@ -256,13 +301,9 @@ CDI::install:ruby.3.0.1() {
   fi
 }
 CDI::install:homebrew() {
-  if which brew >/dev/null 2>/dev/null
-  then
-    true
-  else
-    curl -fsSL "https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh" | bash
-    CDI::user_init:add.eval '$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)'
-  fi
+  # Install script clever enough to skip very fast
+  curl -fsSL "https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh" | bash
+  CDI::user_init:add.eval '/home/linuxbrew/.linuxbrew/bin/brew shellenv -'
 }
 
 CDI::install:user_paths.ccache() {
@@ -296,7 +337,7 @@ CDI::install:cargo() {
     ui::doing "RUST"
     brew: install rustup-init
     rustup-init -y
-    CDI::user_init:add.eval 'source $HOME/.cargo/env'
+    CDI::user_paths:add "$HOME/.cargo/bin"
   fi
 }
 
@@ -320,8 +361,7 @@ UDI::install:xfce4() {
 }
 
 brew:() {
-  CDI::user_init:load
-  brew "$@"
+  /home/linuxbrew/.linuxbrew/bin/brew "$@"
 }
 rbenv:() {
   CDI::user_init:load
@@ -334,6 +374,8 @@ brew:install() {
 brew:install2() {
   brargs="$1"; shift;
 
+  CDI::user_init:load
+  which jq ||  exit 1
   if jq --version >/dev/null 2>/dev/null
   then
     brew: info --json --formulae "${@}" \
@@ -347,7 +389,7 @@ brew:install2() {
       ' \
     | xargs -0 -I::: brew install $brargs ::: # NOTE: DO NOT QUOTE $brargs
   else
-    brew install "${@}"
+    brew: install "${@}"
   fi
 }
 
