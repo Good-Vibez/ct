@@ -17,6 +17,7 @@ main() {
   ui::doing "NVIM"
   CDI::install:vim-plugged
   pip3 install neovim
+  nvim -n --headless -c 'PlugInstall' -c 'qa!'
 
   ui::doing "OMF"
   CDI::install:omf
@@ -30,17 +31,13 @@ main() {
   config::user #(shell, ...?)
 
   ui::doing "CT_DEV"
-  gh:init Good-Vibez/ct ct
+  git:init https://github.com/Good-Vibez/ct ct --branch dev
   mkdir -pv ct/.local/etc
   touch ct/.local/etc/rc.env
-  git -C ct fetch origin dev:Dev
-  git -C ct checkout Dev
   cd ct
   direnv allow .
   xs -f dev_exec/cargo:build
   xs -f dev_exec/cargo:build_release
-  pip3 install neovim
-  nvim -n --headless -c 'PlugInstall' -c 'qa!'
 echo "*] Just chillin'"
 }
 # plug YouCompleteMe needs gcc@5 ¯\_(ツ)_/¯
@@ -156,6 +153,11 @@ EOS
   tee $HOME/.config/fish/conf.d/key_bindings.fish >/dev/null <<-'EOS'
   bind -M insert \c] forward-char
 EOS
+  tee $HOME/.config/fish/conf.d/ls.fish >/dev/null <<-'EOS'
+  function ls
+    /home/linuxbrew/.linuxbrew/bin/lsd $argv
+  end
+EOS
   tee $HOME/.config/fish/conf.d/CDI::user_init.hook.fish >/dev/null <<-'EOS'
   set -x fish_user_paths (string split0 <$HOME/.user_paths) $fish_user_paths
   for command in (string split0 <$HOME/.user_init)
@@ -250,7 +252,6 @@ aur:install() {
   makepkg -sic --noconfirm
 }
 
-
 git:init() {
   source="$1"; shift;
   target="$1"; shift;
@@ -259,7 +260,7 @@ git:init() {
   then
     git -C $target remote update --prune
   else
-    git clone --depth 1 $source $target
+    git clone "$@" $source $target
   fi
 }
 
@@ -268,7 +269,7 @@ gh:init() {
   target="$1"; shift;
 
   source="https://github.com/$name.git"
-  git:init "$source" "$target"
+  git:init "$source" "$target" --depth 1
 }
 
 CDI::linux:distro() {
