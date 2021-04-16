@@ -156,6 +156,7 @@ EOS
 EOS
   tee $HOME/.config/fish/conf.d/key_bindings.fish >/dev/null <<-'EOS'
   bind -M insert \c] forward-char
+  bind -M insert \cP "commandline --replace 'nvim (git:ls-files | fzf)'"
 EOS
   tee $HOME/.config/fish/conf.d/ls.fish >/dev/null <<-'EOS'
   function ls
