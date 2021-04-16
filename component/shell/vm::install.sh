@@ -38,6 +38,7 @@ main() {
   direnv allow .
   xs -f dev_exec/cargo:build
   xs -f dev_exec/cargo:build_release
+  xs -f dev_exec/::sanctioned/sudo:install
 echo "*] Just chillin'"
 }
 # plug YouCompleteMe needs gcc@5 ¯\_(ツ)_/¯
@@ -275,10 +276,10 @@ gh:init() {
 CDI::linux:distro() {
   node_name="$(uname --nodename)"
   case "$node_name" in
-    ubuntu-*)
+    ubuntu*)
       echo "Ubuntu"
       ;;
-    arch.*)
+    arch*)
       echo "Arch"
       ;;
     *)
