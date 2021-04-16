@@ -219,6 +219,7 @@ config::nvim() {
 
   "nmap <C-p> :call fzf#run({'sink':'e','source':'git ls-files .','window':{'width': 0.9,'height': 0.6}})<CR>
   set termguicolors
+  set number
 
   " """ BlueWery """
   " " For dark
