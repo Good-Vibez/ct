@@ -89,12 +89,14 @@ BREW_PACKAGES=(
   # libressl
 
   # Tools
+  darkhttpd
   direnv
+  entr
+  fzf
   gnupg
   jq
   nvim
   pv
-  fzf
 
   # Dev/Workspace/Aesthetics
   fish
