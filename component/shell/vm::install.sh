@@ -36,8 +36,11 @@ main() {
   touch ct/.local/etc/rc.env
   cd ct
   direnv allow .
+  ui::doing "CT_DEV-build"
   xs -f dev_exec/cargo:build
+  ui::doing "CT_DEV-build_release"
   xs -f dev_exec/cargo:build_release
+  ui::doing "CT_DEV-sudo:install"
   xs -f dev_exec/::sanctioned/sudo:install
 echo "*] Just chillin'"
 }
