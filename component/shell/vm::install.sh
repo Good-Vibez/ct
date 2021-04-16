@@ -3,14 +3,14 @@
 main() {
   ui::doing "BASE"
   CDI::install:base_devel
+  config::fish
+  config::bash
+  config::tmux
   ui::doing "RBENV"
   CDI::install:rbenv
   CDI::install:user_paths.ccache
   ui::doing "HMBRW"
   CDI::install:homebrew
-  config::fish
-  config::bash
-  config::tmux
   ui::doing "HMBRW_PKGS"
   brew:install "${BREW_PACKAGES[@]}"
   ui::doing "OMF"
@@ -264,6 +264,10 @@ CDI::user_init:add.eval() {
   hook="$1"; shift;
   CDI::_:add user_init "$hook"
 }
+#
+# CDI::user_init contract
+# - Things can be added to lists user_paths, user_init
+# - They can be load/reloaded with :load()
 CDI::user_init:load() {
   source $HOME/.user_init.bash
 }
@@ -375,8 +379,9 @@ brew:install2() {
   brargs="$1"; shift;
 
   CDI::user_init:load
-  which jq ||  exit 1
   if jq --version >/dev/null 2>/dev/null
+  # If we have no jq then it's the first brew run, and this
+  # check makes no sense anyway.
   then
     brew: info --json --formulae "${@}" \
     | jq \
