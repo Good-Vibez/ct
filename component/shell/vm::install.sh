@@ -6,6 +6,7 @@ main() {
   config::fish
   config::bash
   config::tmux
+  config::nvim
   ui::doing "RBENV"
   CDI::install:rbenv
   CDI::install:user_paths.ccache
@@ -13,6 +14,10 @@ main() {
   CDI::install:homebrew
   ui::doing "HMBRW_PKGS"
   brew:install "${BREW_PACKAGES[@]}"
+  ui::doing "NVIM"
+  CDI::install:vim-plugged
+  pip3 install neovim
+
   ui::doing "OMF"
   CDI::install:omf
   ui::doing "CARGO"
@@ -22,20 +27,34 @@ main() {
   UDI::install:xfce4
   ui::doing "CT"
   CDI::install:ct
+  config::user #(shell, ...?)
+
+  ui::doing "CT_DEV"
+  gh:init Good-Vibez/ct ct
+  mkdir -pv ct/.local/etc
+  touch ct/.local/etc/rc.env
+  git -C ct checkout dev
+  cd ct
+  direnv allow .
+  xs -f dev_exec/cargo:build
+  xs -f dev_exec/cargo:build_release
+  pip3 install neovim
+  nvim -n --headless -c 'PlugInstall' -c 'qa!'
 echo "*] Just chillin'"
 }
 
 COMMON_PACKAGES=(
   ccache
+  curl
   gcc
   git
   htop
   make
-  curl
+  python3
 )
 DEBIAN_APT_NEEDS=(
-  build-essential
   apt-utils
+  build-essential
   dialog
 )
 DEBIAN_APT_KEPT_BACK=(
@@ -51,30 +70,32 @@ PACMAN_AUR_NEEDS=(
 PACMAN_MIRROR_UTIL=rate-arch-mirrors  # AUR
 UBUNTU_MIRROR_UTIL=apt-smart          # pip3
 RUBY_DEPS_DEB=(
-  zlib1g-dev
   libssl-dev
+  zlib1g-dev
 )
 BREW_PACKAGES=(
   ${COMMON_PACKAGES[@]}
 
   # System and gnu
-  zlib
+  cmake
   findutils
-  grep
   gnu-sed
+  grep
+  zlib
   # libressl
 
   # Tools
-  jq
   direnv
-  pv
-  nvim
   gnupg
+  jq
+  nvim
+  pv
+  fzf
 
   # Dev/Workspace/Aesthetics
   fish
-  tmux
   lsd
+  tmux
 )
 
 ui::doing() {
@@ -129,6 +150,9 @@ EOS
   tee $HOME/.config/fish/conf.d/vi.fish >/dev/null <<-'EOS'
   set -g fish_key_bindings fish_vi_key_bindings
 EOS
+  tee $HOME/.config/fish/conf.d/key_bindings.fish >/dev/null <<-'EOS'
+  bind -M insert \c] forward-char
+EOS
   tee $HOME/.config/fish/conf.d/CDI::user_init.hook.fish >/dev/null <<-'EOS'
   set -x fish_user_paths (string split0 <$HOME/.user_paths) $fish_user_paths
   for command in (string split0 <$HOME/.user_init)
@@ -157,6 +181,44 @@ config::tmux() {
   set -g status-left-style bg=colour162
   set -g status-right-style bg=colour17,fg=colour92
   set -g default-terminal screen-256color
+EOS
+}
+config::user() {
+  sudo chsh --shell "$(which fish)" "$(id -nu)"
+}
+config::nvim() {
+  mkdir -pv $HOME/.config/nvim
+  tee $HOME/.config/nvim/init.vim >/dev/null <<-'EOS'
+  call plug#begin(stdpath('data') . '/plugged')
+
+  Plug 'ycm-core/YouCompleteMe', { 'do': './install.py' }
+  Plug 'tpope/vim-sensible'
+  Plug 'tpope/vim-sleuth'
+  Plug 'rust-lang/rust.vim'
+  Plug 'google/vim-jsonnet'
+  Plug 'kyoz/purify', { 'rtp': 'vim' }
+  Plug 'relastle/bluewery.vim'
+  Plug 'preservim/nerdtree'
+  Plug 'rafi/awesome-vim-colorschemes'
+  Plug 'ron-rs/ron.vim'
+
+  Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }
+  "Plug 'junegunn/fzf.vim'
+
+  call plug#end()
+
+  "nmap <C-p> :call fzf#run({'sink':'e','source':'git ls-files .','window':{'width': 0.9,'height': 0.6}})<CR>
+  set termguicolors
+
+  " """ BlueWery """
+  " " For dark
+  " colorscheme bluewery
+  " let g:lightline = { 'colorscheme': 'bluewery' }
+  "
+  " "" For light
+  " "colorscheme bluewery-light
+  " "let g:lightline = { 'colorscheme': 'bluewery_light' }
+  colorscheme apprentice
 EOS
 }
 
@@ -320,7 +382,10 @@ CDI::install:user_paths.ccache() {
       ;;
   esac
 }
-
+CDI::install:vim-plugged() {
+  curl -fLo "${XDG_DATA_HOME:-$HOME/.local/share}"/nvim/site/autoload/plug.vim --create-dirs \
+    https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+}
 CDI::install:omf() {
   if fish -c 'omf >/dev/null' 2>/dev/null
   then
