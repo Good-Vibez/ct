@@ -1,0 +1,64 @@
+#!/usr/local/bin/xs -f
+// vim: et ts=4 sw=4 ft=ron
+Script([
+    Alias ("art",
+        Exec (output: String,
+            cmd: "xs",
+            args: [
+                "-f", "dev_exec/::sanctioned/::alloc:paths",
+                "-ah", "ns", "art",
+                "-ah", "itemns", "issue",
+                "-ah", "item", "database",
+                "-ah", "query", (var: "art:in.q"),
+            ]
+        )
+    ),
+
+    Let ("art:in.q", Expr(".dir")),
+    Let ("database:dir", AliasStmt("art")),
+    //WriteFile("/dev/stderr", (var: "database:dir")),
+    Let ("art:in.q", Expr(".filepath")),
+    Let ("database:file", AliasStmt("art")),
+    //WriteFile("/dev/stderr", (var: "database:file")),
+
+    Exec (output: Display,
+        cmd: "mkdir",
+        args: ["-p", (var: "database:dir")]
+    ),
+
+    Alias ("sql",
+        Exec (output: Stream,
+            cmd: "xs",
+            args: [
+                "-ah", "title", (var: "title"),
+                "-c",
+                r#####"
+                    Script([//-1
+                        WriteFile ("/dev/stdout",
+                            r####"
+                                create table if not exists Issue (
+                                    id INTEGER,
+                                    title TEXT
+                                );
+                                insert into Issue (title) values
+                                    ("####),
+                        WriteValue ("/dev/stdout", (var: "title")),
+                        WriteFile ("/dev/stdout",
+                            r####")
+                                ;
+                            "####),
+                    ])//Script-1
+                "#####,
+            ]
+        )
+    ),
+    //WriteFile ("/dev/stderr", (source: "sql")),
+
+    Exec (output: Display,
+        cmd: "sqlite3",
+        stdin: Source("sql"), cwd: Some("."),
+        args: [
+            (var: "database:file"),
+        ],
+    ),
+])//Script

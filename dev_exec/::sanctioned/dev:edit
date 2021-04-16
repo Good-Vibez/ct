@@ -17,8 +17,8 @@ Script([
 
     Let ("box.arch", Expr ("vm.arch3")),
     Let ("box.ubuntu", Expr ("vm.ubuntu0")),
-    Let ("htop_height", Expr ("10")),
-    Let ("htop_extra_height", Expr ("14")),
+    Let ("htop_height", Expr ("8")),
+    Let ("htop_extra_height", Expr ("12")),
 
     Exec (output: Display,
         cmd: "tmux",

@@ -185,6 +185,16 @@ Script([
         )
     ),
 
+    Alias ("Create a new issue",
+        Exec (output: Display,
+            cmd: "xs",
+            args: [
+                "-f", "dev_exec/issue::new",
+                "-ah", "title", "[TODO] Greet the world",
+            ]
+        )
+    ),
+
     AliasStmt ("Clear xs error server terminal"),
     AliasStmt (r#"Check if sanctioned topics remain sanctioned"#),
 
@@ -220,5 +230,6 @@ Script([
     //AliasStmt ("Install the local binaries (.local/bin.edge)"),
 
     //AliasStmt ("List all used executables"),
+    //AliasStmt ("Create a new issue"),
     AliasStmt ("std::join 1 2 3"),
 ])//Script
