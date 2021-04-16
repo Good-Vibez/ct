@@ -33,7 +33,8 @@ main() {
   gh:init Good-Vibez/ct ct
   mkdir -pv ct/.local/etc
   touch ct/.local/etc/rc.env
-  git -C ct checkout dev
+  git -C ct fetch origin dev:Dev
+  git -C ct checkout Dev
   cd ct
   direnv allow .
   xs -f dev_exec/cargo:build
@@ -42,6 +43,7 @@ main() {
   nvim -n --headless -c 'PlugInstall' -c 'qa!'
 echo "*] Just chillin'"
 }
+# plug YouCompleteMe needs gcc@5 ¯\_(ツ)_/¯
 
 COMMON_PACKAGES=(
   ccache
@@ -82,6 +84,7 @@ BREW_PACKAGES=(
   gnu-sed
   grep
   zlib
+  gcc@5
   # libressl
 
   # Tools
