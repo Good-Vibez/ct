@@ -30,6 +30,8 @@ Script([//-0
         args: [
             "-F", (var: "ssh-config"),
             (var: "target"),
+            "--",
+            "xs",
         ]
     ),
 ])//Script-0
