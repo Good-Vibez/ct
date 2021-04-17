@@ -24,10 +24,10 @@ main() {
   ui::doing "CARGO"
   CDI::install:cargo
   CDI::user_init:load
-  ui::doing "XFCE4"
-  UDI::install:xfce4
-  ui::doing "CT"
-  CDI::install:ct
+  # ui::doing "XFCE4"
+  # UDI::install:xfce4
+  # ui::doing "CT"
+  # CDI::install:ct
   config::user #(shell, ...?)
 
   ui::doing "CT_DEV"
@@ -37,14 +37,13 @@ main() {
   cd ct
   direnv allow .
   ui::doing "CT_DEV-build"
-  xs -f dev_exec/cargo:build
+  ( cd component/cargo && cargo build --workspace --all-targets )
   ui::doing "CT_DEV-build_release"
-  xs -f dev_exec/cargo:build_release
+  ( cd component/cargo && cargo build --workspace --all-targets --release )
   ui::doing "CT_DEV-sudo:install"
-  xs -f dev_exec/::sanctioned/sudo:install
+  .cache/cargo/release/xs -f dev_exec/::sanctioned/sudo:install
 echo "*] Just chillin'"
 }
-# plug YouCompleteMe needs gcc@5 ¯\_(ツ)_/¯
 
 COMMON_PACKAGES=(
   ccache
@@ -85,7 +84,7 @@ BREW_PACKAGES=(
   gnu-sed
   grep
   zlib
-  gcc@5
+  gcc@5 # plug YouCompleteMe needs gcc@5 ¯\_(ツ)_/¯
   # libressl
 
   # Tools
@@ -147,8 +146,11 @@ EOS
 }
 config::fish() {
   mkdir -pv $HOME/.config/fish/conf.d
+  mkdir -pv $HOME/.config/fish/functions
+
   tee $HOME/.config/fish/conf.d/osx_gnu.fish >/dev/null <<-'EOS'
   if test (uname -s) = "Darwin"
+    set -gx PATH /usr/local/opt/coreutils/libexec/gnubin $PATH
     set -gx PATH /usr/local/opt/coreutils/libexec/gnubin $PATH
     set -gx PATH /usr/local/opt/gnu-sed/libexec/gnubin $PATH
   end
@@ -160,15 +162,21 @@ EOS
   bind -M insert \c] forward-char
   bind -M insert \cP "commandline --replace 'nvim (git:ls-files | fzf)'"
 EOS
-  tee $HOME/.config/fish/conf.d/ls.fish >/dev/null <<-'EOS'
-  function ls
-    /home/linuxbrew/.linuxbrew/bin/lsd $argv
+  tee $HOME/.config/fish/conf.d/CDI::user_init:00-user_paths.hook.fish >/dev/null <<-'EOS'
+    set -x fish_user_paths (string split0 <$HOME/.user_paths | sort | uniq) $fish_user_paths
+EOS
+  tee $HOME/.config/fish/functions/CDI::user_init:reload.fish >/dev/null <<-'EOS'
+  function CDI::user_init:reload
+    set -l target $HOME/.config/fish/conf.d/CDI::user_init:01-hooks.fish
+    for command in (string split0 <$HOME/.user_init | sort | uniq)
+      eval "$command"
+    end | tee $target
+    source $target
   end
 EOS
-  tee $HOME/.config/fish/conf.d/CDI::user_init.hook.fish >/dev/null <<-'EOS'
-  set -x fish_user_paths (string split0 <$HOME/.user_paths) $fish_user_paths
-  for command in (string split0 <$HOME/.user_init)
-    eval "$command" | source
+  tee $HOME/.config/fish/functions/ls.fish >/dev/null <<-'EOS'
+  function ls
+    /home/linuxbrew/.linuxbrew/bin/lsd $argv
   end
 EOS
 }
@@ -178,9 +186,19 @@ config::bash() {
   then
     export PATH="$(cat $HOME/.user_paths | tr \\000 :):$PATH"
   fi
-  if test -f $HOME/.user_init
+  CDI::user_init:reload() {
+    target=$HOME/.CDI::user_init:hook.bash
+    cat $HOME/.user_init \
+    | tr \\000 \\n \
+    | sort \
+    | uniq \
+    | bash \
+    | tee $target
+    source $target
+  }
+  if test -f $HOME/.CDI::user_init:hook.bash
   then
-    eval "$(cat $HOME/.user_init | tr \\000 \\n | bash)"
+    source $HOME/.CDI::user_init:hook.bash
   fi
 EOS
   file::line:add.uniq $HOME/.bashrc source $HOME/.user_init.bash
@@ -338,12 +356,9 @@ CDI::user_init:add.eval() {
   hook="$1"; shift;
   CDI::_:add user_init "$hook"
 }
-#
-# CDI::user_init contract
-# - Things can be added to lists user_paths, user_init
-# - They can be load/reloaded with :load()
-CDI::user_init:load() {
+CDI::user_init:load () {
   source $HOME/.user_init.bash
+  CDI::user_init:reload
 }
 
 CDI::install:rbenv-build() {
@@ -360,17 +375,18 @@ CDI::install:rbenv() {
     gh:init "rbenv/rbenv" "$HOME/.rbenv"
     cd ~/.rbenv && src/configure && make -C src
 
-    CDI::user_paths:add "$HOME/.rbenv/bin"
-    CDI::user_init:add.eval 'rbenv init -'
-    CDI::user_init:load
-
-    CDI::install:rbenv-build
-    curl -fsSL "https://github.com/rbenv/rbenv-installer/raw/master/bin/rbenv-doctor" | bash
+    PATH2="$HOME/.rbenv/bin:$PATH"
+    PATH="$PATH2" CDI::install:rbenv-build
+    curl -fsSL "https://github.com/rbenv/rbenv-installer/raw/master/bin/rbenv-doctor" \
+    | PATH="$PATH2" bash
   fi
+  # rbenv init - will not set the PATH
+  CDI::user_paths:add "$HOME/.rbenv/bin"
+  CDI::user_init:add.eval '$HOME/.rbenv/bin/rbenv init -'
+  CDI::user_init:load
 }
 CDI::install:ruby.3.0.1() {
   ui::doing "RB_3.0.1"
-  CDI::user_init:load
   if rbenv versions --bare --skip-aliases | grep 3.0.1
   then
     true
@@ -379,9 +395,11 @@ CDI::install:ruby.3.0.1() {
   fi
 }
 CDI::install:homebrew() {
-  # Install script clever enough to skip very fast
+  # The install script is clever enough to skip very fast
   curl -fsSL "https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh" | bash
+  # brew shellenv - will set the PATH
   CDI::user_init:add.eval '/home/linuxbrew/.linuxbrew/bin/brew shellenv -'
+  CDI::user_init:load
 }
 
 CDI::install:user_paths.ccache() {
@@ -403,7 +421,6 @@ CDI::install:omf() {
   then
     true
   else
-    CDI::user_init:load
     curl -sL https://get.oh-my.fish >omf::install.fish
     fish omf::install.fish --noninteractive
     fish -c 'omf install flash'
@@ -416,14 +433,15 @@ CDI::install:cargo() {
     true
   else
     ui::doing "RUST"
-    brew: install rustup-init
+    brew install rustup-init
     rustup-init -y
-    CDI::user_paths:add "$HOME/.cargo/bin"
   fi
+  CDI::user_paths:add "$HOME/.cargo/bin"
+  # We don't even bother with .cargo/env
 }
 
 CDI::install:ct() {
-  brew: tap Good-Vibez/tap
+  brew tap Good-Vibez/tap
   brew:install2 --HEAD \
     Good-Vibez/tap/xs \
     Good-Vibez/tap/xc \
@@ -441,26 +459,17 @@ UDI::install:xfce4() {
   esac
 }
 
-brew:() {
-  /home/linuxbrew/.linuxbrew/bin/brew "$@"
-}
-rbenv:() {
-  CDI::user_init:load
-  rbenv "$@"
-}
-
 brew:install() {
   brew:install2 "" "${@}"
 }
 brew:install2() {
   brargs="$1"; shift;
 
-  CDI::user_init:load
   if jq --version >/dev/null 2>/dev/null
   # If we have no jq then it's the first brew run, and this
   # check makes no sense anyway.
   then
-    brew: info --json --formulae "${@}" \
+    brew info --json --formulae "${@}" \
     | jq \
       --raw-output \
       --join-output \
@@ -471,7 +480,8 @@ brew:install2() {
       ' \
     | xargs -0 -I::: brew install $brargs ::: # NOTE: DO NOT QUOTE $brargs
   else
-    brew: install "${@}"
+    CDI::user_init:load
+    brew install "${@}"
   fi
 }
 
