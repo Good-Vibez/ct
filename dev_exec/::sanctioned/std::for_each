@@ -1,10 +1,11 @@
 #!/usr/local/bin/xs -f
 // vim: et ts=4 sw=4 ft=ron
 Script([//-0
-    Let ("0:write-2.xs",
+    Let ("script.xs",
         Exec (output: String,
             cmd: "xs",
             args: [
+                "-ah", "items", (var: "items"),
                 "-c",
                 r#####"
                     Script([//-1
@@ -18,7 +19,7 @@ Script([//-0
                                         cmd: "xs",
                                         args: [
                                             "-ah", "item", Each,
-                                            "-c", (var: "2:script")
+                                            "-c", (var: "script")
                                         ],
                                     )
                                 ),
@@ -29,5 +30,11 @@ Script([//-0
             ]
         )
     ),
-    WriteFile ("/dev/stderr", (var: "0:write-2.xs")),
+    Exec (output: Display,
+        cmd: "xs",
+        args: [
+            "-c", (var: "script.xs"),
+            "-ah", "script", (var: "script"),
+        ],
+    ),
 ])//Script-0
