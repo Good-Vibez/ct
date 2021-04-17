@@ -7,7 +7,7 @@ Script([
             Alias ("list",
                 Exec (output: Stream,
                     cmd: "ls",
-                    args: ["-1l", "dev_exec/"],
+                    args: ["-1", "dev_exec/"],
                 )
             ),
             Exec (output: Stream,
