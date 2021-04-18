@@ -282,7 +282,7 @@ git:init() {
   source="$1"; shift;
   target="$1"; shift;
 
-  if test -d $target
+  if test -d $target/.git
   then
     git -C $target remote update --prune
   else
