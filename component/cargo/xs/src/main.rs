@@ -23,10 +23,11 @@ fn main() {
 
             te!(io::Read::read_to_string(&mut inpt, &mut source));
 
-            let script: ast::Script = te!(
-                ron::from_str(&source),
-                format!("Source Ron Script Error")
-            );
+            let script: ast::Script = if opts.json_input_script {
+                te!(json::from_str(&source), format!("Source Json Script Error"))
+            } else {
+                te!(ron::from_str(&source), format!("Source Ron Script Error"))
+            };
             if opts.export_ast {
                 te!(json::to_writer(io::stdout(), &script));
                 eprintln!("{:#?}", script);

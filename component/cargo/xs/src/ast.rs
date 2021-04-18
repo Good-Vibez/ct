@@ -2,7 +2,7 @@
 pub struct Script<'d>(#[serde(borrow)] pub Deq<Stmt<'d>>);
 
 #[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
-#[serde(deny_unknown_fields)]
+//#[serde(deny_unknown_fields)]
 pub enum Stmt<'d> {
     Exec {
         cmd: &'d str,

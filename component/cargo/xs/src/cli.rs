@@ -1,5 +1,3 @@
-type Opt<'a> = (&'static str, fn(&mut Options<'a>));
-
 pub fn parse_args<'a, A, S>(args: &'a A) -> Result<Options<'a>>
 where
     &'a A: IntoIterator<Item = &'a S>,
@@ -14,6 +12,7 @@ where
         err_server: <_>::default(),
         err_server_clear: <_>::default(),
         err_server_quit: <_>::default(),
+        json_input_script: <_>::default(),
     };
     loop {
         match i.next().map(<_>::as_ref) {
@@ -43,6 +42,9 @@ where
             Some("-a") => {
                 opts.export_ast = true;
             }
+            Some("-j") => {
+                opts.json_input_script = true;
+            }
             Some("-ah") => {
                 let name = i.next();
                 let name = te!(name, "Missing name to -ah");
@@ -65,6 +67,7 @@ pub struct Options<'a> {
     pub err_server: bool,
     pub err_server_clear: bool,
     pub err_server_quit: bool,
+    pub json_input_script: bool,
 }
 
 use super::*;
