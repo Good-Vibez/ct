@@ -1,0 +1,70 @@
+#!/usr/local/bin/xs -f
+// vim: et ts=4 sw=4 ft=ron
+Script([
+    Let ("sourcens",
+        Exec (output: String,
+            cmd: "xs",
+            args: [
+                "-ah", "source_namespace", (var: "source_namespace"),
+                "-c",
+                r####"
+                    Script([
+                        WriteFile("/dev/stdout", "source:"),
+                        WriteFile("/dev/stdout", (var: "source_namespace")),
+                    ])
+                "####
+            ],
+        )
+    ),
+
+    Alias ("artifact",
+        Exec (output: String,
+            cmd: "xs",
+            args: [
+                "-f", "dev_exec/::sanctioned/::alloc:paths",
+                "-ah", "query", (var: "art:in.query"),
+                "-ah", "ns", "art",
+                "-ah", "itemns", (var: "sourcens"),
+                "-ah", "item", (var: "file"),
+            ]
+        )
+    ),
+
+    Let ("art:in.query", Expr (".dir")),
+    Let ("dir", AliasStmt ("artifact")),
+
+    Let ("art:in.query", Expr (".filepath")),
+    Let ("artifact", AliasStmt ("artifact")),
+
+    Exec (output: Display,
+        cmd: "mkdir",
+        args: ["-p", (var: "dir")],
+    ),
+
+    // Generate a vim script that loads the file and exports
+    // the pretty HTML.
+    //
+    Exec (output: Display,
+        cmd: "xs",
+        args: [
+            "-ah", "file", (var: "file"),
+            "-ah", "source_dir", (var: "source_dir"),
+            "-ah", "target_dir", (var: "artifact"),
+            "-c",
+            r###"
+                Script([
+                    WriteFile("/dev/stdout", r##"edit "##),
+                    WriteFile("/dev/stdout", (var: "source_dir")),
+                    WriteFile("/dev/stdout", (var: "file")),
+                    WriteFile("/dev/stdout", r##"
+TOhtml
+wq! "##),
+                    WriteFile("/dev/stdout", (var: "target_dir")),
+                    WriteFile("/dev/stdout",
+                        r##".html
+"##),
+                ])
+            "###,
+       ]
+   )
+])//Script

@@ -1,74 +1,56 @@
 (
     source: (
         vagrant: {
-            "alpine-base": (
+            "alpine-boot": (
                 box_os: "alpine", // get from vagrant
-                box_name: "gvz/alpine.base",
+                box_name: "gvz/alpine.boot",
             ),
-            "ubuntu-base": (
+            "ubuntu-boot": (
                 box_os: "ubuntu",
-                box_name: "gvz/ubuntu.base",
+                box_name: "gvz/ubuntu.boot",
+            ),
+            "arch-boot": (
+                box_os: "arch",
+                box_name: "gvz/arch.boot",
             ),
             "alpine-rustup": (
-                source_path: "${var.LocalVagrantArtifacts}/gvz/alpine.base",
+                source_path: "${var.LocalVagrantArtifacts}/gvz/alpine.boot",
                 box_name: "gvz/alpine.rustup",
             ),
         },
         null: {
             "alpine": ( source_vm: "vm.alpine" ), // default
-            "ubuntu": (),
-            "arch": (),
             "alpine-0": ( source_vm: "vm.alpine0" ),
-            "ubuntu-0": ( source_vm: "vm.ubuntu0" ),
-            "arch-0": ( source_vm: "vm.arch" ),
             "alpine-1": ( source_vm: "vm.alpine2" ),
-            "ubuntu-1": ( source_vm: "vm.ubuntu" ),
-            "arch-1": ( source_vm: "vm.arch" ),
             "alpine-2": ( source_vm: "vm.alpine3" ),
-            "ubuntu-2": ( source_vm: "vm.ubuntu" ),
-            "arch-2": ( source_vm: "vm.arch" ),
             "alpine-3": ( source_vm: "vm.alpine4" ),
             "alpine-4": ( source_vm: "vm.alpine5" ),
+            "arch": (),
+            "arch-0": ( source_vm: "vm.arch" ),
+            "arch-1": ( source_vm: "vm.arch" ),
+            "arch-2": ( source_vm: "vm.arch3" ),
+            "ubuntu": (),
+            "ubuntu-0": ( source_vm: "vm.ubuntu0" ),
+            "ubuntu-1": ( source_vm: "vm.ubuntu0" ),
+            "ubuntu-2": ( source_vm: "vm.ubuntu" ),
         }
     ),
+    // These recipes run by default on all selected null
+    // builders, as defined by
+    // - enabled Vagrant VMs (config::vagrant:enabled),
+    // - respective entries in Vagrant SSH exports (state::vagrant:export),
+    // - VMs maps to Null Builders (packer/Database.ron),
+    // - selection of null builders (config::packer),
+    // - selection of recipes (config::packer).
+    //
+    // Builds of those selected elements can be **only** by restricted
+    // at runtime-config (-only/-exclude) per null-builder.
+    //
+    // For further flexibility we build upon on setting-1.
     recipe:
         {
-            "alpine.base": [
-                "vm.alpine.init",
+            "otomatik": [
+                "vm::install",
             ],
-            "boot_build.alpine": [
-                "boot_build.alpine",
-            ]
         },
-
-    variable:
-        {
-            "ssh::HostName": (
-                type: "string",
-                description: "The ssh-host to connect to",
-            ),
-            "ssh::Port": (
-                type: "string",
-                description: "The ssh-port to connect to",
-            ),
-            "ssh::User": (
-                type: "string",
-                description: "The ssh-username to use when logging into the machine",
-            ),
-            "ssh::IdentityFile": (
-                type: "string",
-                description: "The ssh-identity to use when logging into the machine",
-            ),
-
-            "path::Root": (
-                type: "string",
-                description: "Absolute path to the root of the repository",
-            ),
-        },
-
-    build:
-        {
-            "alpine.base": (
-            ),
-        }
 )

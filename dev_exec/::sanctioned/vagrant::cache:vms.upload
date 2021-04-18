@@ -1,0 +1,115 @@
+#!/usr/local/bin/xs -f
+// vim: et ts=4 sw=4 ft=ron
+Script([
+
+    Let ("vms",
+        Exec (output: String,
+            cmd: "xs",
+            args: ["-f", "dev_exec/::sanctioned/config::vagrant:enabled"],
+        )
+    ),
+
+    Exec (output: Display,
+        cmd: "xs",
+        args: [
+            "-f", "dev_exec/::sanctioned/std::for_each",
+            "-ah", "items", (var: "vms"),
+            "-ah", "script", r#####"Script([//-1
+                WriteFile ("/dev/stderr", "===> "),
+                WriteFile ("/dev/stderr", (var: "item")),
+                WriteFile ("/dev/stderr", " "),
+                Alias ("paths",
+                    Exec (output: String,
+                        cmd: "xs",
+                        args: [
+                            "-f", "dev_exec/::sanctioned/::alloc:paths",
+                            "-ah", "ns", "art",
+                            "-ah", "itemns", (var: "paths:mns"),
+                            "-ah", "item", (var: "paths:m"),
+                            "-ah", "query", (var: "paths:q"),
+                        ],
+                    )
+                ),
+
+                Let ("paths:mns", Expr("vagrant")),
+                Let ("paths:m", Expr("ssh_config")),
+                Let ("paths:q", Expr(".filepath")),
+                Let ("ssh-config", AliasStmt("paths")),
+
+                Let ("paths:mns", Expr("vm:tarpack")),
+                Let ("paths:m", Expr((var: "item"))),
+                Let ("paths:q", Expr(".filepath")),
+                Let ("art_path", AliasStmt("paths")),
+                WriteFile ("/dev/stderr", (var: "art_path")),
+                WriteFile ("/dev/stderr", " --> "),
+
+                Let ("total_bytes",
+                    List([
+                        Alias ("du",
+                            Exec (output: Stream,
+                                cmd: "du",
+                                args: [
+                                    "--bytes", "--total", "--null",
+                                    "--summarize", (var: "art_path")
+                                ],
+                            )
+                        ),
+                        Exec (output: String,
+                            stdin: Source("du"), cwd: Some("."),
+                            cmd: "xargs",
+                            args: [
+                                "-0", "-L999999", "jq", "-nRj", "--args", r####".
+                                    | $ARGS.positional as $args
+                                    | ($args | length) as $len
+                                    | $args[$len - 1]
+                                    | split("\t")[0]
+                                "####,
+                            ]
+                        ),
+                    ])
+                ),
+                WriteFile ("/dev/stderr", (var: "total_bytes")),
+                WriteFile ("/dev/stderr", (bs: [10])),
+
+                Alias ("pv",
+                    Exec (output: Stream,
+                        cmd: "pv",
+                        args: [
+                            "--size", (var: "total_bytes"),
+                            "--eta",
+                            "--progress",
+                            "--timer",
+                            "--rate",
+                            "--average-rate",
+                            "--bytes",
+                            "--buffer-percent",
+                            "--name", (var: "item"),
+                            "--force",
+                            "--cursor",
+                            (var: "art_path"),
+                        ],
+                    )
+                ),
+                Exec (output: Display,
+                    cmd: "ssh",
+                    stdin: Source("pv"), cwd: Some("."),
+                    args: [
+                        "-F", (var: "ssh-config"),
+                        (var: "item"),
+                        "--",
+                        r####"
+                            #!/usr/bin/bash
+                            sudo \
+                                tar --preserve-permissions -x \
+                                    .rbenv/versions/ \
+                                    .cargo/ \
+                                    .rustup/ \
+                                -C /home \
+                                    linuxbrew
+                        "####
+                    ]
+                ),
+            ])//Script-1"#####,
+        ]
+    ),
+])//Script

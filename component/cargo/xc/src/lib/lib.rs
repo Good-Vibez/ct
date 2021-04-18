@@ -15,6 +15,7 @@ const SSH_CONFIG: &str = "h";
 const VAGRANT: &str = "v";
 const STRING: &str = "s";
 const BYTES: &str = "b";
+const NULL_SEPARATED: &str = "0";
 
 pub fn app<I: io::Read, O: io::Write>(
     args: Vec<String>,
@@ -50,6 +51,13 @@ pub fn app<I: io::Read, O: io::Write>(
                 }
                 write!(stdout, "]")?;
 
+                Ok(())
+            }
+            NULL_SEPARATED => {
+                buffer.lines().fold("", |separator, line| {
+                    let _ = write!(stdout, "{}{}", separator, line);
+                    "\x00"
+                });
                 Ok(())
             }
             other => {

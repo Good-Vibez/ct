@@ -1,0 +1,46 @@
+#!/usr/local/bin/xs -f
+// vim: et ts=4 sw=4 ft=ron
+Script([
+    Alias ("join_args_with",
+        Exec (output: String,
+            cmd: "xs",
+            args: [
+                "-f", "dev_exec/::sanctioned/std::join",
+                "-ah", "items", (var: "source_path"),
+                "-ah", "sep", (var: "join_args_with:in.sep"),
+            ]
+        )
+    ),
+
+    Let ("join_args_with:in.sep", Expr ("/")),
+    Let ("source_dir", AliasStmt ("join_args_with")),
+
+    Let ("join_args_with:in.sep", Expr (".")),
+    Let ("source_namespace", AliasStmt ("join_args_with")),
+
+    Let ("tohtml.vim",
+        Exec (output: String,
+            cmd: "xs",
+            args: [
+                "-f", "dev_exec/::sanctioned/dev:make_source_html.vim",
+                "-ah", "source_namespace", (var: "source_namespace"),
+                "-ah", "source_dir", (var: "source_dir"),
+            ]
+        )
+    ),
+
+    // Magic
+    Alias ("output",
+        Exec (output: Stream,
+            cmd: "nvim",
+            args: [
+                "-n", // do not do swap files
+                "--headless", // do not start any UI
+                //"-V1", // print something
+                "-c", (var: "tohtml.vim"), // run these commands after loading init config
+            ],
+            //stdin: Source("tohtml.vim"), cwd: Some("."),
+        )
+    ),
+    WriteFile ("/dev/stdout", (source: "output")),
+])//Script

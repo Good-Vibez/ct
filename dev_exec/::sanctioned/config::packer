@@ -11,9 +11,18 @@ WriteValue ("/dev/stdout",
             r##"
                 .
                 |   ."null" |= {
-                        "alpine-3",
+                        # "alpine-3",
+                        "arch-2",
+                        "ubuntu-1",
                     }
-                |   { "null" }
+                |   .vagrant |= {
+                        # "arch-boot",
+                        # "ubuntu-boot",
+                    }
+                |   {
+                    "null",
+                    # vagrant,
+                }
             "##
         ],
 
@@ -22,7 +31,9 @@ WriteValue ("/dev/stdout",
 
             r##"
                 .
-                |   { "boot_build.alpine" }
+                |   {
+                    "otomatik",
+                }
             "##
         ],
 

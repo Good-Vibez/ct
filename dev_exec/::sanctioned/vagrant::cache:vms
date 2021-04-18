@@ -1,0 +1,160 @@
+#!/usr/local/bin/xs -f
+// vim: et ts=3 sw=4 ft=ron
+Script([//-0
+    Let ("ssh-config",
+        Exec (output: String,
+            cmd: "xs",
+            args: [
+                "-f", "dev_exec/::sanctioned/::alloc:paths",
+                "-ah", "ns", "art",
+                "-ah", "itemns", "vagrant",
+                "-ah", "item", "ssh_config",
+                "-ah", "query", ".filepath",
+            ],
+        )
+    ),
+
+    Let ("vms",
+        Exec (output: String,
+            cmd: "xs",
+            args: ["-f", "dev_exec/::sanctioned/config::vagrant:enabled"],
+        )
+    ),
+
+    Exec (output: Display,
+        cmd: "xs",
+        args: [
+            "-f", "dev_exec/::sanctioned/std::for_each",
+            "-ah", "items", (var: "vms"),
+            "-ah", "script", r#####"Script([//-1
+                WriteFile ("/dev/stderr", "===> "),
+                WriteFile ("/dev/stderr", (var: "item")),
+                WriteFile ("/dev/stderr", " "),
+                Alias ("xsx", Exec (output: Stream,
+                    cmd: "xs",
+                    args: [
+                        "-f", "dev_exec/sxs",
+                        "-ah", "ssh_config_itemns", "vagrant",
+                        "-ah", "target", (var: "item"),
+                        "-ah", "script.xs", (var: "xsx:in.script"),
+                    ]
+                )),
+
+                Let ("xsx:in.script", Expr(r####"Script([//-2
+                    Alias ("HOME",
+                        Exec (output: Stream,
+                            cmd: "printenv",
+                            args: ["HOME"],
+                        )
+                    ),
+                    Exec (output: Display,
+                        cmd: "xc",
+                        stdin: Source("HOME"), cwd: Some("."),
+                        args: ["s0"]
+                    )
+                ])//Script-2"####)),
+                Let ("HOME",
+                    Exec (output: String,
+                        cmd: "cat",
+                        stdin: Source("xsx"), cwd: Some("."),
+                    )
+                ),
+                WriteFile("/dev/stderr", (var: "HOME")),
+                WriteFile ("/dev/stderr", " $> "),
+
+                Let ("xsx:in.script", Expr(r####"Script([
+                    Exec (output: Display,
+                        cmd: "du",
+                        args: [
+                            "--bytes", "--total", "--null", "--summarize",
+                            ".rbenv/versions/",
+                            ".cargo/",
+                            ".rustup/",
+                            "/home/linuxbrew",
+                        ],
+                    ),
+                ])//Script-2"####)),
+                Let ("total_bytes",
+                    Exec (output: String,
+                        cmd: "xargs",
+                        args: [
+                            "-0", "-L999999", "jq", "-nRj", "--args", r####".
+                                | $ARGS.positional as $args
+                                | ($args | length) as $len
+                                | $args[$len - 1]
+                                | split("\t")[0]
+                            "####,
+                        ],
+                        stdin: Source("xsx"), cwd: Some("."),
+                    ),
+                ),
+                WriteFile ("/dev/stderr", (var: "total_bytes")),
+                WriteFile ("/dev/stderr", (bs: [10])),
+
+                Let ("xsx:in.script", Expr(r####"Script([
+                    Exec (output: Display,
+                        cmd: "tar",
+                        args: [
+                            "-c",
+                            ".rbenv/versions/",
+                            ".cargo/",
+                            ".rustup/",
+                            "-C", "/home",
+                            "linuxbrew",
+                        ],
+                    ),
+                ])//Script-2"####)),
+                //WriteFile ("/dev/stdout", (source: "xsx")),
+                Alias ("pv",
+                    Exec (output: Stream,
+                        cmd: "pv",
+                        stdin: Source("xsx"), cwd: Some("."),
+                        args: [
+                            "--size", (var: "total_bytes"),
+                            "--eta",
+                            "--progress",
+                            "--timer",
+                            "--rate",
+                            "--average-rate",
+                            "--bytes",
+                            "--buffer-percent",
+                            "--name", (var: "item"),
+                            "--force",
+                            "--cursor",
+                        ],
+                    )
+                ),
+
+                Alias ("path",
+                    Exec (output: String,
+                        cmd: "xs",
+                        args: [
+                            "-f", "dev_exec/::sanctioned/::alloc:paths",
+                            "-ah", "ns", "art",
+                            "-ah", "itemns", "vm:tarpack",
+                            "-ah", "item", (var: "item"),
+                            "-ah", "query", (var: "path:in.q"),
+                        ],
+                    )
+                ),
+
+                Let ("path:in.q", Expr(".filepath")),
+                Let ("art_path", AliasStmt("path")),
+                WriteFile ("/dev/stderr", " --> "),
+                WriteFile ("/dev/stderr", (var: "art_path")),
+                WriteFile ("/dev/stderr", " <-- "),
+                WriteFile ("/dev/stderr", (bs: [10])),
+
+                Let ("path:in.q", Expr(".dir")),
+                Let ("dir", AliasStmt("path")),
+
+                Exec (cmd: "mkdir", args: ["-p", (var: "dir")]),
+                Exec (
+                    cmd: "tee",
+                    args: [(var: "art_path")],
+                    stdin: Source("pv"), cwd: Some("."),
+                ),
+            ])//Script-1"#####,
+        ]
+    ),
+])//Script-0

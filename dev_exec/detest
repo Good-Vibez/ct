@@ -10,15 +10,8 @@ Script([
     ),
 
     Alias ("Build cargo workspace",
-
-        // Normally it's this, but hack-around to restrict compile-error lines
-        //Exec (output: Display,
-        //   cmd: "xs",
-        //   args: ["-f", "dev_exec/build"],
-        //),
         List([
             Let ("cargo-run.xs.sh",
-
                 // TODO: create a cargo-max-lines wrapper
 
                 //HACK: this is a pure workaround to capture STDERR.
@@ -48,13 +41,6 @@ Script([
         ])
     ),
 
-    Alias ("Dev-loop meta::sanctioned",
-        Exec (output: Display,
-            cmd: "xs",
-            args: ["-f", "dev_exec/meta::sanctioned"],
-        ),
-    ),
-
     Alias (r#"The "life" sequence"#,
         Exec (output: Display,
             cmd: "xs",
@@ -62,46 +48,30 @@ Script([
         )
     ),
 
-    Alias ("Update packer configuration"    , Exec (cmd: "xs", args: ["-f", "dev_exec/packer:config"]                       , output: Display)),
-    Alias ("Validate packer configuration"  , Exec (cmd: "xs", args: ["-f", "dev_exec/packer:", "-ah", "_", ["validate"]]   , output: Display)),
-    Alias ("Inspect packer configuration"   , Exec (cmd: "xs", args: ["-f", "dev_exec/packer:", "-ah", "_", ["inspect"]]    , output: Display)),
+    Alias ("Update packer configuration"    , Exec (cmd: "xs", args: ["-f", "dev_exec/::sanctioned/packer:config"]                      , output: Display)),
+    Alias ("Validate packer configuration"  , Exec (cmd: "xs", args: ["-f", "dev_exec/::sanctioned/packer:", "-ah", "_", ["validate"]]  , output: Display)),
+    Alias ("Inspect packer configuration"   , Exec (cmd: "xs", args: ["-f", "dev_exec/::sanctioned/packer:", "-ah", "_", ["inspect"]]   , output: Display)),
+    Alias ("Build otomatik packer builds"   , Exec (cmd: "xs", args: ["-f", "dev_exec/::sanctioned/packer:", "-ah", "_", ["build"]]     , output: Display)),
+    Alias ("Print the generated packer configuration",
+        Exec (output: Display,
+            cmd: "xs",
+            args: [
+                "-f", "dev_exec/::sanctioned/::read2",
+                "-ah", "_", r####"
+                    ns: cache
+                    itemns: packer
+                    item: build.pkr.json
+                "####
+            ],
+        )
+    ),
 
     Alias ("Update cargo-build-tag"         , Exec (cmd: "xs", args: ["-f", "dev_exec/cargo:update_buildtag"]               , output: Display)),
 
     Alias ("Run the cargo-cache-dir query"  , Exec (cmd: "xs", args: ["-f", "dev_exec/config::cargo.toml.json?cache"]       , output: Display)),
 
     Alias ("Check if sanctioned topics remain sanctioned",
-        List ([
-            Let ("topics", Expr ([
-                "vagrant",
-                "alloc",
-                "read",
-                "config",
-                "install",
-                "sudo",
-                "meta",
-                "packer",
-                "git",
-                "push",
-                //"cargo",
-            ])),
-            ForEach ("topics",
-                List ([
-                    Let ("is_topic_sanctioned:in.topic", Expr (Each)),
-
-                    //WriteFile ("/dev/stderr", "+++ SANCTIONED "),
-                    //WriteFile ("/dev/stderr", (var: "is_topic_sanctioned:in.topic")),
-
-                    Exec (output: Display,
-                        cmd: "xs",
-                        args: [
-                            "-f", "dev_exec/meta:test_is_topic_sanctioned",
-                            "-ah", "topic", (var: "is_topic_sanctioned:in.topic"),
-                        ],
-                    ),
-                ])
-            ),
-        ])
+        Exec (cmd: "xs", args: ["-f", "dev_exec/::sanctioned/sanctioned::spiritus_sanctius"], output: Display)
     ),
 
     Alias ("Run a random translation with DeepL.com",
@@ -114,22 +84,152 @@ Script([
         )
     ),
 
-    AliasStmt ("Clear xs error server terminal"),
-    AliasStmt ("Build cargo workspace"),
+    Alias ("git ls-files",
+        Exec (output: Display,
+            cmd: "xs",
+            args: [
+                "-f", "dev_exec/::sanctioned/git:ls-files",
+            ],
+        )
+    ),
 
-    //AliasStmt ("Dev-loop meta::sanctioned"),
+    Alias ("Print the time and date",
+        Exec (output: Display,
+            cmd: "date"
+        )
+    ),
+
+    Alias ("Create colourful html of ::sanctioned",
+        Exec (output: Display,
+            cmd: "xs",
+            args: [
+                "-f", "dev_exec/::sanctioned/dev:make_source_html",
+                "-ah", "source_path", r#"["dev_exec", "::sanctioned"]"#,
+            ]
+        ),
+    ),
+    Alias ("Create colourful html of ::decommissioned",
+        Exec (output: Display,
+            cmd: "xs",
+            args: [
+                "-f", "dev_exec/::sanctioned/dev:make_source_html",
+                "-ah", "source_path", r#"["dev_exec", "::decommission"]"#,
+            ]
+        ),
+    ),
+    Alias ("Create colourful html of dev_exec/",
+        Exec (output: Display,
+            cmd: "xs",
+            args: [
+                "-f", "dev_exec/::sanctioned/dev:make_source_html",
+                "-ah", "source_path", r#"["dev_exec"]"#,
+            ]
+        ),
+    ),
+
+    Alias ("std::join 1 2 3",
+        Exec (output: Display,
+            cmd: "xs",
+            args: [
+                "-f", "dev_exec/::sanctioned/std::join",
+                "-ah", "items", r#"["one", "two", "three"]"#,
+                "-ah", "sep", "/"
+            ]
+        )
+    ),
+
+    Alias ("Install the local binaries (.local/bin.edge)",
+        Exec (output: Display,
+            cmd: "xs",
+            args: [
+                "-f", "dev_exec/::sanctioned/local:install_local_bin",
+            ],
+        )
+    ),
+
+    Alias ("Regenerate Vagrantfile",
+        Exec (output: Display,
+            cmd: "xs",
+            args: [
+                "-f", "dev_exec/::sanctioned/vagrant:config",
+            ]
+        )
+    ),
+    Alias ("Print the generated Vagrantfile",
+        Exec (output: Display,
+            cmd: "xs",
+            args: [
+                "-f", "dev_exec/::sanctioned/::read2",
+                "-ah", "_", r####"
+                    ns: cache
+                    itemns: vagrant
+                    item: Vagrantfile.gen.rb
+                "####
+            ]
+        )
+    ),
+    Alias ("Cache VMs",
+        Exec(output: Display,
+            cmd: "xs",
+            args: [
+                "-f", "dev_exec/::sanctioned/vagrant::cache:vms",
+            ],
+        )
+    ),
+    Alias ("List all used executables",
+        Exec (output: Display,
+            cmd: "xs",
+            args: [
+                "-f", "dev_exec/::sanctioned/meta::list:Exec.cmd",
+            ],
+        )
+    ),
+
+    Alias ("Create a new issue",
+        Exec (output: Display,
+            cmd: "xs",
+            args: [
+                "-f", "dev_exec/issue::new",
+                "-ah", "title", "[TODO] Greet the world",
+            ]
+        )
+    ),
+
+    AliasStmt ("Clear xs error server terminal"),
+    AliasStmt (r#"Check if sanctioned topics remain sanctioned"#),
+
+    //AliasStmt ("Build cargo workspace"),
+
+    //AliasStmt ("Regenerate Vagrantfile"),
+    //AliasStmt ("Print the generated Vagrantfile"),
 
     //AliasStmt (r#"The "life" sequence"#),
 
     //AliasStmt ("Update packer configuration"),
     //AliasStmt ("Validate packer configuration"),
     //AliasStmt ("Inspect packer configuration"),
+    //AliasStmt ("Print the generated packer configuration"),
+    //AliasStmt ("Build otomatik packer builds"),
+    //AliasStmt ("Cache VMs"),
 
     //AliasStmt ("Update cargo-build-tag"),
 
-    AliasStmt ("Run the cargo-cache-dir query"),
-
-    AliasStmt (r#"Check if sanctioned topics remain sanctioned"#),
+    //AliasStmt ("Run the cargo-cache-dir query"),
 
     //AliasStmt ("Run a random translation with DeepL.com"),
+
+    //AliasStmt ("git ls-files"),
+
+    //AliasStmt ("Print the time and date"),
+
+    //AliasStmt ("Create colourful html of ::sanctioned"),
+    //AliasStmt ("Create colourful html of ::decommissioned"),
+    //AliasStmt ("Create colourful html of dev_exec/"),
+    //WriteFile ("/dev/stderr", (bs:[10,10])),
+
+    //AliasStmt ("Install the local binaries (.local/bin.edge)"),
+
+    //AliasStmt ("List all used executables"),
+    //AliasStmt ("Create a new issue"),
+    AliasStmt ("std::join 1 2 3"),
 ])//Script

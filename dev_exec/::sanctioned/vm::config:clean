@@ -1,0 +1,40 @@
+#!/usr/local/bin/xs -f
+// vim: et ts=4 sw=4 ft=ron
+Script([//-0
+    Let ("vms",
+        Exec (output: String,
+            cmd: "xs",
+            args: ["-f", "dev_exec/::sanctioned/config::vagrant:enabled"]
+        )
+    ),
+
+    Exec (output: Display,
+        cmd: "xs",
+        args: [
+            "-f", "dev_exec/::sanctioned/std::for_each",
+            "-ah", "items", (var: "vms"),
+            "-ah", "script",
+            r#####"
+                Script([//-1
+                    WriteFile ("/dev/stderr", "Killing "),
+                    WriteFile ("/dev/stderr", (var: "item")),
+                    WriteFile ("/dev/stderr", (bs: [10])),
+                    Exec (output: Display,
+                        cmd: "xs",
+                        args: [
+                            "-f", "dev_exec/sxs",
+                            "-ah", "target", (var: "item"),
+                            "-ah", "ssh_config_itemns", "vagrant",
+                            "-ah", "script.xs", r####"Script([//-2
+                                Exec (output: Display,
+                                    cmd: "rm",
+                                    args: ["-rf", ".config", ".local/share/omf", ".user_init.bash", ".user_init", ".user_paths"]
+                                )
+                            ])//Script-2"####
+                        ]
+                    )
+                ])//Script-1
+            "#####
+        ]
+    )
+])//Script-0
