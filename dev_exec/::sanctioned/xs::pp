@@ -1,0 +1,20 @@
+#!/usr/local/bin/xs -f
+// vim: et ts=4 sw=4 ft=ron
+Script([//-0
+    Let ("input.xs",
+        Exec (output: String,
+            cmd: "xs",
+            args: [
+                "-c",
+                r#####"
+                    Script([//-1
+                    ])//Script-1
+                "#####
+            ],
+        )
+    ),
+    Alias ("input",
+        Exec (output: Stream,
+            cmd: "xc",
+            args: ["-f", "dev_exec/::sanctioned/std::echo", "-ah", "_",
+])//Script-0

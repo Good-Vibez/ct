@@ -195,6 +195,25 @@ Script([
         )
     ),
 
+    Alias ("Preprocess pkt::import:brew.xsp",
+        List ([
+            Alias ("json",
+                Exec (output: Stream,
+                    cmd: "xs",
+                    args: [
+                        "-f", "dev_exec/::sanctioned/xs::pp",
+                        "-ah", "file", "dev_exec/::sanctioned/pkt::import:brew.xsp",
+                    ],
+                )
+            ),
+            Exec (output: Display,
+                cmd: "jq",
+                stdin: Source("json"), cwd: Some("."),
+            ),
+        ])
+    ),
+
+
     AliasStmt ("Clear xs error server terminal"),
     AliasStmt (r#"Check if sanctioned topics remain sanctioned"#),
 
@@ -231,5 +250,7 @@ Script([
 
     //AliasStmt ("List all used executables"),
     //AliasStmt ("Create a new issue"),
+
+    AliasStmt ("Preprocess pkt::import:brew.xsp"),
     AliasStmt ("std::join 1 2 3"),
 ])//Script

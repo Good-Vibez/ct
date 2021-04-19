@@ -1,0 +1,18 @@
+#!/usr/local/bin/xs -f
+// vim: et ts=4 sw=4 ft=ron
+Script([
+    Alias ("brew unlink",
+        Exec (output: Stream,
+            cmd: "brew",
+            args: ["unlink", "--dry-run", (var: "name")],
+        )
+    ),
+    Alias ("brew unlink",
+        Exec (output: Stream,
+            cmd: "tail",
+            args: ["-n+1"],
+            stdin: Source("brew unlink"), cwd: Some("."),
+        )
+    ),
+    WriteFile ("/dev/stderr", (source: "brew unlink")),
+])//Script

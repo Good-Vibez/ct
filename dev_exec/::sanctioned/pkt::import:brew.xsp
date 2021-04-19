@@ -1,0 +1,13 @@
+// vim: et ts=4 sw=4 ft=ron
+[//Script-0
+    Alias ("brew unlink",
+        cmd: "brew",
+        args: ["unlink", "--dry-run", (var: "name")],
+    ),
+    Alias ("brew unlink",
+        cmd: "tail",
+        args: ["-n+1"],
+        stdin: Source("brew unlink"),
+    ),
+    WriteFile ("/dev/stderr", (source: "brew unlink")),
+]//Script-0
