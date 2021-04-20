@@ -14,7 +14,7 @@ Database (
             vagrant_docker: (image: "ubuntu:20.04"),
         ),
         "arch": (
-            vagrant_vbox: (box: "generic/arch"),
+            vagrant_vbox: (box: "archlinux/archlinux"),
         ),
     },
 
