@@ -400,7 +400,7 @@ CDI::install:rbenv() {
     gh:init "rbenv/rbenv" "$HOME/.rbenv"
     cd ~/.rbenv && src/configure && make -C src
 
-    PATH2="$HOME/.rbenv/bin:$PATH"
+    PATH2="$HOME/.rbenv/bin:$HOME/.rbenv/shims:$PATH"
     PATH="$PATH2" CDI::install:rbenv-build
     curl -fsSL "https://github.com/rbenv/rbenv-installer/raw/master/bin/rbenv-doctor" \
     | PATH="$PATH2" bash
