@@ -8,6 +8,7 @@ Script([//-0
             args: [
                 "dev_exec",
                 "-type", "f",
+                "!", "-name", "*.xsp",
                 "-print0",
             ]
         )
@@ -24,6 +25,8 @@ Script([//-0
                 "-c",
                 r#####"
                     Script([//-1
+                        WriteFile ("/dev/stderr", "==> "),
+                        WriteFile ("/dev/stderr", (var: "file")),
                         Alias ("input",
                             Exec (output: Stream,
                                 cmd: "cat",
@@ -73,6 +76,7 @@ Script([//-0
                             )
                         ),
                         WriteFile ("/dev/stdout", (source: "commands")),
+                        WriteFile ("/dev/stderr", (bs: [10])),
                     ])//Script-1
                 "#####
             ]
