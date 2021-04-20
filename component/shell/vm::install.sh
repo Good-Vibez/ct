@@ -7,6 +7,7 @@ main() {
   config::bash
   config::tmux
   config::nvim
+  config::git
   ui::doing "RBENV"
   CDI::install:rbenv
   CDI::install:user_paths.ccache
@@ -251,6 +252,29 @@ config::nvim() {
   " "let g:lightline = { 'colorscheme': 'bluewery_light' }
   colorscheme apprentice
 EOS
+}
+
+config::git() {
+  target_dir=/home/linuxbrew/.linuxbrew/opt/git/etc
+  mkdir -pv $target_dir
+  tee $target_dir/gitconfig >/dev/null <<-'EOS'
+[alias]
+s = status --short
+
+h = log --pretty --oneline --decorate --graph
+ha = h --all
+h1 = h -1
+hs = h --show-signature
+
+m = commit
+ma = commit --amend --reset-author
+
+d = diff
+ds = diff --cached
+
+addu = add --update
+EOS
+  ln -svf
 }
 
 pacman:install() {
