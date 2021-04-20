@@ -19,7 +19,14 @@ main() {
   CDI::install:vim-plugged
   pip3 install neovim
   nvim -n --headless -c 'PlugInstall' -c 'qa!'
-  ( cd $HOME/.local/share/nvim/plugged/YouCompleteMe && python3 ./install.py --rust-completer )
+  (
+    # plug YouCompleteMe needs gcc@5 ¯\_(ツ)_/¯
+    brew install gcc@5 &&
+    cd $HOME/.local/share/nvim/plugged/YouCompleteMe &&
+    python3 ./install.py --rust-completer &&
+    brew uninstall gcc@5 &&
+    true;
+  )
 
   ui::doing "OMF"
   CDI::install:omf
@@ -66,10 +73,12 @@ DEBIAN_APT_KEPT_BACK=(
   linux-headers-virtual
   linux-image-virtual
   linux-virtual
+  man-db
 )
 PACMAN_AUR_NEEDS=(
   base-devel
   pacman-contrib
+  man-db
 )
 PACMAN_MIRROR_UTIL=rate-arch-mirrors  # AUR
 UBUNTU_MIRROR_UTIL=apt-smart          # pip3
@@ -86,7 +95,6 @@ BREW_PACKAGES=(
   gnu-sed
   grep
   zlib
-  gcc@5 # plug YouCompleteMe needs gcc@5 ¯\_(ツ)_/¯
   # libressl
 
   # Tools
@@ -108,17 +116,31 @@ BREW_PACKAGES=(
 ui::doing() {
   printf '==> %s\n' "$1"
 }
+ui::add() {
+  printf '(\x1b[38;5;111m+\x1b[m) \x1b[38;5;112m%s\x1b[m \x1b[38;5;118m%s\x1b[m' "$@"
+}
 
-file::line:add.uniq() {
-  file="$1"; shift;
-  line="$1"; shift;
+sudo:() {
+  printf '(\x1b[38;5;152msudo\x1bm) %s' "$*" #1>&2
+  sudo "$@"
+}
+
+file::line:uniq() {
+  local file="$1"; shift;
+  local line="$1"; shift;
 
   if grep --fixed-strings --regexp "$line" "$file" >/dev/null 2>/dev/null
   then
     true
   else
-    echo "$line" >>$file
+    echo "$line"
   fi
+}
+file::line:add.uniq() {
+  local file="$1"; shift;
+  local line="$1"; shift;
+
+  file::line:uniq "$file" "$line" >>$file
 }
 
 config::apt:sources() {
@@ -256,9 +278,10 @@ EOS
 }
 
 config::git() {
-  target_dir=/home/linuxbrew/.linuxbrew/opt/git/etc
+  local target_dir=$HOME/.config/git
+  local target=$target_dir/config
   mkdir -pv $target_dir
-  tee $target_dir/gitconfig >/dev/null <<-'EOS'
+  cat >$target <<-'EOS'
 [alias]
 s = status --short
 
@@ -275,7 +298,6 @@ ds = diff --cached
 
 addu = add --update
 EOS
-  ln -svf
 }
 
 pacman:install() {
@@ -304,8 +326,8 @@ aur:install() {
 }
 
 git:init() {
-  source="$1"; shift;
-  target="$1"; shift;
+  local source="$1"; shift;
+  local target="$1"; shift;
 
   if test -d $target/.git
   then
@@ -316,15 +338,15 @@ git:init() {
 }
 
 gh:init() {
-  name="$1"; shift;
-  target="$1"; shift;
+  local name="$1"; shift;
+  local target="$1"; shift;
 
   source="https://github.com/$name.git"
-  git:init "$source" "$target" --depth 1
+  git:init "$source" "$target" --depth 1 "$@"
 }
 
 CDI::linux:distro() {
-  node_name="$(uname --nodename)"
+  local node_name="$(uname --nodename)"
   case "$node_name" in
     ubuntu*)
       echo "Ubuntu"
@@ -358,8 +380,8 @@ CDI::install:base_devel() {
 }
 
 CDI::_:add() {
-  list="$1"; shift;
-  item="$1"; shift;
+  local list="$1"; shift;
+  local item="$1"; shift;
 
   format="$(
     if test -f "$HOME/.$list"
@@ -374,11 +396,11 @@ CDI::_:add() {
     tee /dev/null >/dev/null
 }
 CDI::user_paths:add() {
-  extra_path="$1"; shift;
+  local extra_path="$1"; shift;
   CDI::_:add user_paths "$extra_path"
 }
 CDI::user_init:add.eval() {
-  hook="$1"; shift;
+  local hook="$1"; shift;
   CDI::_:add user_init "$hook"
 }
 CDI::user_init:load () {
@@ -387,7 +409,7 @@ CDI::user_init:load () {
 }
 
 CDI::install:rbenv-build() {
-  target="$(rbenv root)"/plugins
+  local target="$(rbenv root)"/plugins
 
   mkdir -p "$target"
   gh:init "rbenv/ruby-build" "$target/ruby-build"
@@ -420,11 +442,32 @@ CDI::install:ruby.3.0.1() {
   fi
 }
 CDI::install:homebrew() {
-  # The install script is clever enough to skip very fast
-  curl -fsSL "https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh" | bash
+  # This install script is clever enough to skip very fast
+  #curl -fsSL "https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh" | bash
+
+  #if ! id -u linuxbrew
+  #then
+  #  ui::add user linuxbrew
+  #  sudo adduser -D -s /bin/bash linuxbrew
+  #fi
+  #file::line:uniq \
+  #  'linuxbrew ALL=(ALL) NOPASSWD:ALL' \
+  #  /etc/sudoers \
+  #| sudo: tee -a /etc/sudoers >/dev/null
+
+  local target=/home/linuxbrew
+  local mu="$(id -u)"
+  local mg="$(id -g)"
+  sudo: mkdir -pv $target
+  sudo: chown -Rv $mu:$mg $target
+  gh:init Homebrew/Brew $target/.linuxbrew
+
   # brew shellenv - will set the PATH
-  CDI::user_init:add.eval '/home/linuxbrew/.linuxbrew/bin/brew shellenv -'
+  CDI::user_init:add.eval "$target/.linuxbrew/bin/brew shellenv -"
   CDI::user_init:load
+
+  brew update
+  brew doctor
 }
 
 CDI::install:user_paths.ccache() {
@@ -488,7 +531,7 @@ brew:install() {
   brew:install2 "" "${@}"
 }
 brew:install2() {
-  brargs="$1"; shift;
+  local brargs="$1"; shift;
 
   if jq --version >/dev/null 2>/dev/null
   # If we have no jq then it's the first brew run, and this
