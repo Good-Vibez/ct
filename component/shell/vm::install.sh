@@ -19,6 +19,7 @@ main() {
   CDI::install:vim-plugged
   pip3 install neovim
   nvim -n --headless -c 'PlugInstall' -c 'qa!'
+  ( cd $HOME/.local/share/nvim/plugged/YouCompleteMe && python3 ./install.py --rust-completer )
 
   ui::doing "OMF"
   CDI::install:omf
