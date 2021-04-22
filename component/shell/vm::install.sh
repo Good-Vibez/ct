@@ -43,14 +43,16 @@ main() {
   git:init https://github.com/Good-Vibez/ct ct --branch dev
   mkdir -pv ct/.local/etc
   touch ct/.local/etc/rc.env
-  cd ct
-  direnv allow .
-  ui::doing "CT_DEV-build"
-  ( cd component/cargo && cargo build --workspace --all-targets )
-  ui::doing "CT_DEV-build_release"
-  ( cd component/cargo && cargo build --workspace --all-targets --release )
-  ui::doing "CT_DEV-sudo:install"
-  .cache/cargo/release/xs -f dev_exec/::sanctioned/sudo:install
+  (
+    cd ct
+    direnv allow .
+    ui::doing "CT_DEV-build"
+    ( cd component/cargo && cargo build --workspace --all-targets )
+    ui::doing "CT_DEV-build_release"
+    ( cd component/cargo && cargo build --workspace --all-targets --release )
+    ui::doing "CT_DEV-sudo:install"
+    .cache/cargo/release/xs -f dev_exec/::sanctioned/sudo:install
+  )
 echo "*] Just chillin'"
 }
 
@@ -320,9 +322,10 @@ aur:install() {
   curl https://aur.archlinux.org/cgit/aur.git/snapshot/$name.tar.gz >$name.tar.gz
 
   tar xvf $name.tar.gz
-  cd $name
-
-  makepkg -sic --noconfirm
+  (
+    cd $name
+    makepkg -sic --noconfirm
+  )
 }
 
 git:init() {
@@ -420,7 +423,7 @@ CDI::install:rbenv() {
     true
   else
     gh:init "rbenv/rbenv" "$HOME/.rbenv"
-    cd ~/.rbenv && src/configure && make -C src
+    ( cd ~/.rbenv && src/configure && make -C src )
 
     PATH2="$HOME/.rbenv/bin:$HOME/.rbenv/shims:$PATH"
     PATH="$PATH2" CDI::install:rbenv-build
@@ -459,7 +462,7 @@ CDI::install:homebrew() {
   local mu="$(id -u)"
   local mg="$(id -g)"
   sudo: mkdir -pv $target
-  sudo: chown -Rv $mu:$mg $target
+  sudo: chown -R $mu:$mg $target
   gh:init Homebrew/Brew $target/.linuxbrew
 
   # brew shellenv - will set the PATH
