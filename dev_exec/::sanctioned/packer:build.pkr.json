@@ -218,6 +218,7 @@ Exec (output: Display,
                 ssh_port: ssh_get("Port"),
                 ssh_username: ssh_get("User"),
                 ssh_private_key_file: ssh_get("IdentityFile"),
+                ssh_remote_tunnels: ["8080:localhost:8080"],
             }
         }
         ;

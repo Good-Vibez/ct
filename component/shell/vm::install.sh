@@ -8,6 +8,8 @@ main() {
   config::tmux
   config::nvim
   config::git
+  config::dnsmasq
+  config::resolved
   ui::doing "RBENV"
   CDI::install:rbenv
   CDI::install:user_paths.ccache
@@ -64,6 +66,7 @@ COMMON_PACKAGES=(
   htop
   make
   python3
+  dnsmasq
 )
 DEBIAN_APT_NEEDS=(
   apt-utils
@@ -145,29 +148,62 @@ file::line:add.uniq() {
   file::line:uniq "$file" "$line" >>$file
 }
 
+config::dnsmasq() {
+  ui::doing "Configure dnsmasq"
+  sudo tee /etc/dnsmasq.conf >/dev/null <<-'EOS'
+    #address=/github.com/127.0.0.1
+    #address=/ghcr.io/127.0.0.1
+    #address=/github.com/::1
+    #address=/ghcr.io/::1
+    port=5353
+EOS
+  sudo systemctl restart dnsmasq
+  sudo systemctl status dnsmasq
+}
+config::resolved() {
+  local target_dir=/etc/systemd/resolved.conf.d/
+  local target=70-caching.conf
+  ui::doing "Configure systemd-resolved"
+  sudo mkdir -p "$target_dir"
+  sudo tee "$target_dir/$target" >/dev/null <<-'EOS'
+[Resolve]
+DNS=127.0.0.1:5353
+EOS
+  sudo systemctl daemon-reload
+  sudo systemctl restart systemd-resolved
+  sudo systemctl status systemd-resolved
+}
 config::apt:sources() {
-  ui::doing "Instal ubuntu apt sources"
-  sudo tee /etc/apt/sources.list >/dev/null <<-'EOS'
-    deb http://mirror.eu.kamatera.com/ubuntu focal main restricted
-    deb http://mirror.eu.kamatera.com/ubuntu focal-updates main restricted
-    deb http://mirror.eu.kamatera.com/ubuntu focal universe
-    deb http://mirror.eu.kamatera.com/ubuntu focal-updates universe
-    deb http://mirror.eu.kamatera.com/ubuntu focal multiverse
-    deb http://mirror.eu.kamatera.com/ubuntu focal-updates multiverse
-    deb http://mirror.eu.kamatera.com/ubuntu focal-backports main restricted universe multiverse
+  ui::doing "Install ubuntu apt sources"
+  sudo tee /etc/aptlsources.list >/dev/null <<-'EOS'
+    #deb http://mirror.eu.kamatera.com/ubuntu focal main restricted
+    #deb http://mirror.eu.kamatera.com/ubuntu focal-updates main restricted
+    #deb http://mirror.eu.kamatera.com/ubuntu focal universe
+    #deb http://mirror.eu.kamatera.com/ubuntu focal-updates universe
+    #deb http://mirror.eu.kamatera.com/ubuntu focal multiverse
+    #deb http://mirror.eu.kamatera.com/ubuntu focal-updates multiverse
+    #deb http://mirror.eu.kamatera.com/ubuntu focal-backports main restricted universe multiverse
+    deb http://localhost:8080/ubuntu focal main restricted
+    deb http://localhost:8080/ubuntu focal-updates main restricted
+    deb http://localhost:8080/ubuntu focal universe
+    deb http://localhost:8080/ubuntu focal-updates universe
+    deb http://localhost:8080/ubuntu focal multiverse
+    deb http://localhost:8080/ubuntu focal-updates multiverse
+    deb http://localhost:8080/ubuntu focal-backports main restricted universe multiverse
     deb http://security.ubuntu.com/ubuntu focal-security main restricted
     deb http://security.ubuntu.com/ubuntu focal-security universe
     deb http://security.ubuntu.com/ubuntu focal-security multiverse
 EOS
 }
 config::pacman:mirrorlist() {
-  ui::doing "Instal arch pacman mirrorlist"
+  ui::doing "Install arch pacman mirrorlist"
   sudo tee /etc/pacman.d/mirrorlist >/dev/null <<-'EOS'
-    Server = https://archlinux.koyanet.lv/archlinux/$repo/os/$arch
-    Server = http://mirror.puzzle.ch/archlinux/$repo/os/$arch
-    Server = http://mirror.datacenter.by/pub/archlinux/$repo/os/$arch
-    Server = https://archlinux.uk.mirror.allworldit.com/archlinux/$repo/os/$arch
-    Server = http://mirror.easylee.nl/archlinux/$repo/os/$arch
+    #Server = https://archlinux.koyanet.lv/archlinux/$repo/os/$arch
+    #Server = http://mirror.puzzle.ch/archlinux/$repo/os/$arch
+    #Server = http://mirror.datacenter.by/pub/archlinux/$repo/os/$arch
+    #Server = https://archlinux.uk.mirror.allworldit.com/archlinux/$repo/os/$arch
+    #Server = http://mirror.easylee.nl/archlinux/$repo/os/$arch
+    Server = http://localhost:8080/archlinux/$repo/os/$arch
 EOS
 }
 config::fish() {
@@ -240,7 +276,10 @@ config::tmux() {
 EOS
 }
 config::user() {
-  sudo chsh --shell "$(which fish)" "$(id -nu)"
+  local fish_bin="$(which fish)"
+
+  echo "$fish_bin" | sudo tee -a /etc/shells
+  sudo chsh --shell "$fish_bin" "$(id -nu)"
 }
 config::nvim() {
   mkdir -pv $HOME/.config/nvim
@@ -299,6 +338,10 @@ d = diff
 ds = diff --cached
 
 addu = add --update
+
+reup = remote update
+
+pf = push --force-with-lease
 EOS
 }
 
