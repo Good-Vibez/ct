@@ -342,6 +342,8 @@ addu = add --update
 reup = remote update
 
 pf = push --force-with-lease
+
+co = checkout
 EOS
 }
 
