@@ -1,6 +1,8 @@
-.local/etc/VirtualBox/
-.local/etc/fish/
-.local/share/direnv/
-.local/share/nvim/plugged
-.local/share/nvim/shada/
-.local/share/state.sqlite3
+/.local/cache/
+/.local/etc/VirtualBox/
+/.local/etc/fish/
+/.local/etc/irb/
+/.local/share/direnv/
+/.local/share/nvim/plugged
+/.local/share/nvim/shada/
+/.local/share/state.sqlite3
