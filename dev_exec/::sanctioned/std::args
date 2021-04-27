@@ -1,0 +1,38 @@
+#!/usr/local/bin/xs -f
+// vim: et ts=4 sw=4 ft=ron
+Script([
+    Alias ("args.json",
+        Exec (output: Stream,
+            cmd: "xs",
+            args: [
+                "-f", "dev_exec/::sanctioned/std::yaml_to_json",
+                "-ah", "_", (var: "_"),
+            ],
+        )
+    ),
+    //WriteFile ("/dev/stderr", "std::args|>args.json := "),
+    //WriteFile ("/dev/stderr", (source: "args.json")),
+    //WriteFile ("/dev/stderr", (bs: [10])),
+    Alias ("args",
+        List([
+            //WriteFile ("/dev/stderr", "std::args|args|@args:in.q := "),
+            //WriteFile ("/dev/stderr", (var: "args:in.q")),
+            //WriteFile ("/dev/stderr", (bs: [10])),
+            Exec (output: Display,
+                cmd: "jq",
+                stdin: Source("args.json"), cwd: Some("."),
+                args: [
+                    "--raw-output", "--join-output",
+                    "--exit-status",
+                    (var: "args:in.q")
+                ],
+            ),
+        ])
+    ),
+    Let ("args:in.q", Expr((var: "q"))),
+
+    //WriteFile ("/dev/stderr", "std::args|@args:in.q := "),
+    //WriteFile ("/dev/stderr", (var: "args:in.q")),
+    //WriteFile ("/dev/stderr", (bs: [10])),
+    AliasStmt ("args"),
+])//Script

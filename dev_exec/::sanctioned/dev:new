@@ -26,23 +26,23 @@ Exec (
     WriteFile ((var: "name"),
 r###"#!/usr/local/bin/xs -f
 // vim: et ts=4 sw=4 ft=ron
-Script([
+Script([//-0
+    Let ("cwd",
+        Exec (output: String,
+            cmd: "pwd",
+            cwd: Some("/"),
+        )
+    ),
 
-Let ("cwd",
-Exec (output: String,
-    cmd: "pwd",
-    cwd: Some("/"),
-)),
+    Alias ("hello",
+        Exec (output: Stream,
+            cmd: "echo",
+            args: ["hello", "world", "not from this place: !!!±/", (var: "cwd")]
+        )
+    ),
 
-Alias ("hello",
-Exec (output: Stream,
-    cmd: "echo",
-    args: ["hello", "world", "not from this place: !!!±/", (var: "cwd")]
-)),
-
-WriteFile ("/dev/stdout", (source: "hello")),
-
-])//Script
+    WriteFile ("/dev/stdout", (source: "hello")),
+])//Script-0
 "###
     ), // WriteFile in lvl 2
 

@@ -1,8 +1,13 @@
 /.local/cache/
 /.local/etc/VirtualBox/
+/.local/etc/cargo/.package-cache
+/.local/etc/cargo/git/
+/.local/etc/cargo/registry/
 /.local/etc/fish/
 /.local/etc/irb/
+/.local/etc/rc.env
 /.local/share/direnv/
+/.local/share/fish/
 /.local/share/nvim/plugged
 /.local/share/nvim/shada/
 /.local/share/state.sqlite3

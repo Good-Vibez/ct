@@ -1,0 +1,119 @@
+#!/usr/local/bin/xs -f
+// vim: et ts=4 sw=4 ft=ron
+Script([//-0
+    List([
+        Alias ("args",
+            Exec (output: String,
+                cmd: "xs",
+                args: [
+                    "-f", "dev_exec/::sanctioned/std::args",
+                    "-ah", "_", (var: "_"),
+                    "-ah", "q", (var: "args:in.q"),
+                ]
+            )
+        ),
+
+        Let ("args:in.q", Expr(".[0]")),
+        Let ("action", AliasStmt("args")),
+        //WriteFile("/dev/stderr", (var: "action")),
+        //WriteFile("/dev/stderr", " "),
+
+        Let ("args:in.q", Expr(".[1]")),
+        Let ("path", AliasStmt("args")),
+        //WriteFile("/dev/stderr", (var: "path")),
+        //WriteFile("/dev/stderr", " "),
+
+        Let ("args:in.q", Expr(".[2]")),
+        Let ("data", AliasStmt("args")),
+        //WriteFile("/dev/stderr", (var: "data")),
+        //WriteFile("/dev/stderr", (bs: [10])),
+
+        Let ("COL0", Expr ((bs:
+            // \x1b [   3  8   ;   5   ;   1  9  2   m
+            [  27,  91, 51,56, 59, 53, 59, 49,57,50, 109]
+        ))),
+        Let ("COL1", Expr ((bs:
+            // \x1b [   3  8   ;   5   ;   1  1  1   m
+            [  27,  91, 51,56, 59, 53, 59, 49,49,49, 109]
+        ))),
+        Let ("COL2", Expr ((bs:
+            // \x1b [   3  8   ;   5   ;   1  1  2   m
+            [  27,  91, 51,56, 59, 53, 59, 49,49,50, 109]
+        ))),
+        Let ("COL3", Expr ((bs:
+            // \x1b [   3  8   ;   5   ;   2  2  2   m
+            [  27,  91, 51,56, 59, 53, 59, 50,50,50, 109]
+        ))),
+        Let ("RESET", Expr ((bs:
+            // \x1b [   m
+            [  27,  91, 109]
+        ))),
+        WriteFile ("/dev/stderr", "[ 💍 ]. "),
+        WriteFile ("/dev/stderr", (var: "COL1")),
+        WriteFile ("/dev/stderr", (var: "action")),
+        WriteFile ("/dev/stderr", (var: "COL2")),
+        WriteFile ("/dev/stderr", ".."),
+        WriteFile ("/dev/stderr", (var: "COL3")),
+        WriteFile ("/dev/stderr", (var: "path")),
+        WriteFile ("/dev/stderr", (var: "COL1")),
+        WriteFile ("/dev/stderr", (var: "COL0")),
+        WriteFile ("/dev/stderr", " || "),
+        WriteFile ("/dev/stderr", (var: "COL2")),
+        WriteFile ("/dev/stderr", (var: "data")),
+        WriteFile ("/dev/stderr", (var: "RESET")),
+        WriteFile ("/dev/stderr", (bs: [0x0a])),
+
+        Alias ("sql",
+            List([
+                Let ("header", Expr(r#####"
+                    CREATE TABLE IF NOT EXISTS ResourceEvents (
+                        action TEXT,
+                        path TEXT,
+                        data TEXT,
+                        PRIMARY KEY (action, path, data)
+                            ON CONFLICT IGNORE
+                    );
+                    INSERT INTO ResourceEvents (action, path, data) VALUES
+                        ("#####
+                )),
+                Let ("footer", Expr(r#####")
+                    ;
+                "#####)),
+                Exec (output: Stream,
+                    cmd: "xs",
+                    args: [
+                        "-ah", "header", (var: "header"),
+                        "-ah", "footer", (var: "footer"),
+                        "-ah", "action", (var: "action"),
+                        "-ah", "path", (var: "path"),
+                        "-ah", "data", (var: "data"),
+                        "-c",
+                        r#####"
+                            Script([//-1
+                                WriteFile ("/dev/stdout", (var: "header")),
+                                WriteValue ("/dev/stdout", (var: "action")),
+                                WriteFile ("/dev/stdout", ", "),
+                                WriteValue ("/dev/stdout", (var: "path")),
+                                WriteFile ("/dev/stdout", ", "),
+                                WriteValue ("/dev/stdout", (var: "data")),
+                                WriteFile ("/dev/stdout", (var: "footer")),
+                            ])//Script-1
+                        "#####
+                    ]
+                ),
+            ]),
+        ),
+        //WriteFile ("/dev/stderr", (source: "sql")),
+
+        Exec (output: Display,
+            cmd: "sqlite3",
+            stdin: Source("sql"), cwd: Some("."),
+            args: [
+                "-bail",
+                "-batch",
+                "-column",
+                "-noheader",
+            ],
+        )
+    ]),
+])//Script-0
