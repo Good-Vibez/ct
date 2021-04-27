@@ -1,0 +1,9 @@
+#!/usr/local/bin/xs -f
+// vim: et ts=4 sw=4 ft=ron
+Script([//-0
+    WriteFile ("/dev/stdout", r#"
+        "-ah", "ns", "cache",
+        "-ah", "itemns", "rc-events",
+        "-ah", "item", "db.sqlite3",
+    "#),
+])//Script-0

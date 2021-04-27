@@ -46,10 +46,10 @@ Exec (output: Stream,
 
     (
     if $ns == "art" then
-      "_.artifact/\($itemns)"
+      ".local/share/::alloc:\($itemns)"
     else
       if $ns == "cache" then
-        ".cache/\($itemns)"
+        ".local/cache/::alloc:\($itemns)"
       else
         ("Unknown ns: \($ns)" | halt_error(1))
       end

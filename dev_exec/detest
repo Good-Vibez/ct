@@ -1,7 +1,6 @@
 #!/usr/local/bin/xs -f
 // vim: et ts=4 sw=4 ft=ron
 Script([
-
     Alias ("Clear xs error server terminal",
         Exec (
             cmd: "xs",
@@ -213,6 +212,26 @@ Script([
         ])
     ),
 
+    Alias ("Init and list rc-events",
+        List([
+            Let ("commands", Expr([
+                ["-f", "dev_exec/::sanctioned/rc::", "-ah", "_", r#"[ put, /blueprint/0/network/0/cidr                       , 10.0.0.1  ]"#],
+                ["-f", "dev_exec/::sanctioned/rc::", "-ah", "_", r#"[ put, /blueprint/0/kernel/0/system                      , arch      ]"#],
+                ["-f", "dev_exec/::sanctioned/rc::", "-ah", "_", r#"[ put, /blueprint/0/network_assignment/eth0/network      , 0         ]"#],
+                ["-f", "dev_exec/::sanctioned/rc::", "-ah", "_", r#"[ put, /blueprint/0/network_assignment/eth0/kernel       , 0         ]"#],
+                ["-f", "dev_exec/::sanctioned/rc::events"],
+            ])),
+            ForEach ("commands",
+                Exec (output: Display,
+                    cmd: "xs",
+                    args: [
+                        "-f", "dev_exec/::sanctioned/std::xs",
+                        "-ah", "_", Each,
+                    ],
+                )
+            ),
+        ]),
+    ),
 
     AliasStmt ("Clear xs error server terminal"),
     AliasStmt (r#"Check if sanctioned topics remain sanctioned"#),
@@ -251,6 +270,8 @@ Script([
     //AliasStmt ("List all used executables"),
     //AliasStmt ("Create a new issue"),
 
-    AliasStmt ("Preprocess pkt::import:brew.xsp"),
+    //AliasStmt ("Preprocess pkt::import:brew.xsp"),
+
+    AliasStmt ("Init and list rc-events"),
     AliasStmt ("std::join 1 2 3"),
 ])//Script

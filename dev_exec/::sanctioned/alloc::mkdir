@@ -1,0 +1,55 @@
+#!/usr/local/bin/xs -f
+// vim: et ts=4 sw=4 ft=ron
+Script([//-0
+    Alias ("path",
+        List([
+            Let ("path_args",
+                Exec (output: String,
+                    cmd: "xs",
+                    args: [
+                        "-ah", "alloc_key", (var: "_"),
+                        "-ah", "query", (var: "path:in.q"),
+                        "-c",
+                        r#####"
+                            Script([//-1
+                                WriteFile ("/dev/stdout", r####"
+                                    [
+                                        "-f", "dev_exec/::sanctioned/::alloc:paths",
+                                "####),
+                                WriteFile ("/dev/stdout", (var: "alloc_key")),
+                                WriteFile ("/dev/stdout", r####"
+                                        "-ah", "query",
+                                "####),
+                                WriteValue ("/dev/stdout", (var: "query")),
+                                WriteFile ("/dev/stdout", r####",
+                                    ]
+                                "####),
+                            ])//Script-1
+                        "#####
+                    ],
+                )
+            ),
+            Exec (output: String,
+                cmd: "xs",
+                args: [
+                    "-f", "dev_exec/::sanctioned/std::xs",
+                    "-ah", "_", (var: "path_args"),
+                ],
+            )
+        ])
+    ),
+
+
+    Let ("path:in.q", Expr(".dir")),
+    Let ("dir", AliasStmt("path")),
+
+    Let ("path:in.q", Expr(".filepath")),
+    Let ("filepath", AliasStmt("path")),
+
+    Exec (
+        cmd: "mkdir",
+        args: ["-p", (var: "dir")],
+    ),
+
+    WriteFile ("/dev/stdout", (var: "filepath")),
+])//Script-0

@@ -67,9 +67,9 @@ Script([//-0
             List([
                 Let ("header", Expr(r#####"
                     CREATE TABLE IF NOT EXISTS ResourceEvents (
-                        action TEXT,
-                        path TEXT,
-                        data TEXT,
+                        action BLOB,
+                        path BLOB,
+                        data BLOB,
                         PRIMARY KEY (action, path, data)
                             ON CONFLICT IGNORE
                     );
@@ -105,6 +105,25 @@ Script([//-0
         ),
         //WriteFile ("/dev/stderr", (source: "sql")),
 
+        Let ("db_alloc_key",
+            Exec (output: String,
+                cmd: "xs",
+                args: ["-f", "dev_exec/::sanctioned/rc::sql:lite.filepath"],
+            )
+        ),
+        //WriteFile ("/dev/stderr", (var: "db_alloc_key")),
+
+        Let ("db:filepath",
+            Exec (output: String,
+                cmd: "xs",
+                args: [
+                    "-f", "dev_exec/::sanctioned/alloc::mkdir",
+                    "-ah", "_", (var: "db_alloc_key"),
+                ],
+            )
+        ),
+        //WriteFile ("/dev/stderr", (var: "db:filepath")),
+
         Exec (output: Display,
             cmd: "sqlite3",
             stdin: Source("sql"), cwd: Some("."),
@@ -113,7 +132,8 @@ Script([//-0
                 "-batch",
                 "-column",
                 "-noheader",
+                (var: "db:filepath"),
             ],
-        )
+        ),
     ]),
 ])//Script-0

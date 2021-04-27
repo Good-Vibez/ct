@@ -1,15 +1,7 @@
 #!/usr/local/bin/xs -f
 // vim: et ts=4 sw=4 ft=ron
 Script([//-0
-    Let ("args",
-        Exec (output: String,
-            cmd: "xs",
-            args: [
-                "-ah", "_", (var: "_"),
-                "-f", "dev_exec/::sanctioned/std::yaml_to_json",
-            ],
-        )
-    ),
+    Let ("args", Expr((var: "_"))),
 
     // Script-1 writes Script-2 to script.xs
     // script.xs runs xs with the YAML arguments given to (var: "args")

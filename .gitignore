@@ -10,4 +10,5 @@
 /.local/share/fish/
 /.local/share/nvim/plugged
 /.local/share/nvim/shada/
+/.local/share/nvim/swap/
 /.local/share/state.sqlite3
