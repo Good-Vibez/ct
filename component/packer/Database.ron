@@ -21,18 +21,6 @@
         null: {
             "alpine": ( source_vm: "vm.alpine" ), // default
             "alpine-0": ( source_vm: "vm.alpine0" ),
-            "alpine-1": ( source_vm: "vm.alpine2" ),
-            "alpine-2": ( source_vm: "vm.alpine3" ),
-            "alpine-3": ( source_vm: "vm.alpine4" ),
-            "alpine-4": ( source_vm: "vm.alpine5" ),
-            "arch": (),
-            "arch-0": ( source_vm: "vm.arch" ),
-            "arch-1": ( source_vm: "vm.arch" ),
-            "arch-2": ( source_vm: "vm.arch3" ),
-            "ubuntu": (),
-            "ubuntu-0": ( source_vm: "vm.ubuntu0" ),
-            "ubuntu-1": ( source_vm: "vm.ubuntu0" ),
-            "ubuntu-2": ( source_vm: "vm.ubuntu" ),
         }
     ),
     // These recipes run by default on all selected null

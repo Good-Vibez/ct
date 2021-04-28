@@ -58,16 +58,21 @@ Let ("Preprocess with box names (JQ)", Expr (r####"
         if $instance.provider == "vagrant_vbox"
         then
             [
-                "['modifyvm', :id, '--graphicscontroller', 'vmsvga']",
                 "['modifyvm', :id, '--accelerate3d', 'on']",
                 "['modifyvm', :id, '--audio', 'none']",
                 "['modifyvm', :id, '--clipboard-mode', 'disabled']",
                 "['modifyvm', :id, '--draganddrop', 'disabled']",
-                "['modifyvm', :id, '--vrde', 'off']",
+                "['modifyvm', :id, '--graphicscontroller', 'vmsvga']",
+                "['modifyvm', :id, '--nested-hw-virt', 'on']",
+                "['modifyvm', :id, '--nestedpaging', 'on']",
+                "['modifyvm', :id, '--pae', 'on']",
+                "['modifyvm', :id, '--recording', 'off']",
                 "['modifyvm', :id, '--teleporter', 'off']",
                 "['modifyvm', :id, '--tracing-enabled', 'off']",
                 "['modifyvm', :id, '--usbcardreader', 'off']",
-                "['modifyvm', :id, '--recording', 'off']"
+                "['modifyvm', :id, '--vrde', 'off']",
+                "['modifyvm', :id, '--vtxux', 'on']",
+                "['modifyvm', :id, '--vtxvpid', 'on']"
             ]
         else
             []
