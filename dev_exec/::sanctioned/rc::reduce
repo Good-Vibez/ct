@@ -1,0 +1,91 @@
+#!/usr/local/bin/xs -f
+// vim: et ts=4 sw=4 ft=ron
+Script([//-0
+    Let ("db_alloc_key",
+        Exec (output: String,
+            cmd: "xs",
+            args: ["-f", "dev_exec/::sanctioned/rc::sql:lite.filepath"],
+        )
+    ),
+    //WriteFile ("/dev/stderr", (var: "db_alloc_key")),
+
+    Let ("db:filepath",
+        Exec (output: String,
+            cmd: "xs",
+            args: [
+                "-f", "dev_exec/::sanctioned/alloc::mkdir",
+                "-ah", "_", (var: "db_alloc_key"),
+            ],
+        )
+    ),
+    //WriteFile ("/dev/stderr", (var: "db:filepath")),
+
+    Alias ("sql",
+        Exec (output: Stream,
+            cmd: "xs",
+            args: [
+                "-f", "dev_exec/::sanctioned/std::echo",
+                "-ah", "_", r#####"
+                    WITH
+                        BLUEPRINT (BLUEPRINT) AS (VALUES ("/blueprint/")),
+                        Blueprints (id) AS (
+                            WITH
+                                Idx(idx) AS (
+                                    SELECT
+                                        instr(path, BLUEPRINT)
+                                    FROM
+                                        ResourceEvents,
+                                        BLUEPRINT
+                                ),
+                                Subfix(subfix) AS (
+                                    SELECT
+                                        substr(path, idx + length(BLUEPRINT))
+                                    FROM
+                                        Idx,
+                                        ResourceEvents,
+                                        BLUEPRINT
+                                ),
+                                IdPos(id_pos) AS (
+                                    SELECT
+                                        instr(subfix, "/")
+                                    FROM
+                                        Subfix
+                                ),
+                                Id(id) AS (
+                                    SELECT
+                                        substr(subfix, 0, id_pos)
+                                    FROM
+                                        IdPos,
+                                        Subfix
+                                )
+                            SELECT DISTINCT
+                                id
+                            FROM
+                                Id
+                        )
+                    SELECT
+                        *
+                    FROM
+                        Blueprints
+                "#####
+            ],
+        )
+    ),
+    Alias ("table.csv",
+        Exec (output: Stream,
+            cmd: "sqlite3",
+            stdin: Source("sql"), cwd: Some("."),
+            args: [
+                "-bail",
+                "-batch",
+                "-csv",
+                "-noheader",
+                (var: "db:filepath"),
+            ],
+        )
+    ),
+    Exec (output: Display,
+        cmd: "cat",
+        stdin: Source("table.csv"), cwd: Some("."),
+    ),
+])//Script-0
