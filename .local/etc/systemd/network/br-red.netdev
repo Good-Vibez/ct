@@ -1,0 +1,6 @@
+[Match]
+Name=br-red
+[NetDev]
+Description="A Bridge to capture red"
+Name=br-red
+Kind=bridge

@@ -1,0 +1,37 @@
+[Unit]
+Description=A Masquarador of DNS
+#PartOf=reverse_proxy.target
+[Install]
+[Service]
+
+Type=dbus
+BusName=uk.org.thekelleys.%N
+ExecStartPre=/usr/bin/%N --test
+ExecStart=/usr/bin/%N -k --enable-dbus --user=%N --pid-file
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=on-failure
+
+# Type=Exec
+# PIDFile=%t/%N/nginx.pid
+# ExecStart=/usr/bin/%N -C %E/%N/%N.conf
+
+ConfigurationDirectory=%N
+RuntimeDirectory=%N
+LogsDirectory=%N
+
+#User=%N
+#Group=%N
+#DynamicUser=true
+PrivateDevices=true
+PrivateNetwork=false
+PrivateIPC=true
+#PrivateUsers=true
+ProtectHostname=true
+ProtectClock=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+#RestrictAddressFamilies=AF_NETLINK AF_INET
+LockPersonality=true
+PrivateMounts=true

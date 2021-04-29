@@ -1,0 +1,8 @@
+[Match]
+Name=br-red
+[Link]
+#MACAddress=01:23:45:67:89:ab
+[Network]
+Description=DNS spoofing github.com
+DNS=127.0.0.1:5353
+Domains=~github.com

@@ -1,0 +1,12 @@
+[alias]
+	s = status --short
+	m = commit
+	ma = commit --ammend --reset-author
+	h = log --all --decorate --pretty=oneline --graph
+	hs = h --stat
+	h1 = h -1
+	ha = h --all
+	addu = add --update
+	reup = remote update
+	d = diff
+	ds = diff --cached
