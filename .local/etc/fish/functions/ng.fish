@@ -41,8 +41,29 @@ function ng
     set -e argv[1]
     ng ui::col 109 $argv
     ng ui::end
+  else if test $argv[1] = "config:path"
+    printf '%s' "/etc/"(ng srv:raw)
+  else if test $argv[1] = "config:path.local"
+    printf '%s' ".local/etc/"(ng srv:raw)
+  else if test $argv[1] = "config:list"
+    find (ng config:path.local) -type f -print0
+  else if test $argv[1] = "config:test"
+    for item in (ng config:list | string split0)
+      if ! ng install:test {(ng config:path),(ng config:path.local)}/$item
+        ui::warn NOT_INSTALLED $item
+        return 1
+      end
+    end
+  else if test $argv[1] = "config:"
+    if ng config:test
+      ui::report:1 CONFIGURED
+    else
+      ui::report:0 UNCONFIGURED
+    end
+  else if test $argv[1] = "install_paths"
+    printf '%s\n' {.local,}/etc/(ng srv:raw)/ #(ng srv:raw).conf
   else if test $argv[1] = "install"
-    sudo cp -v {.local,}/etc/$ng_service/$ng_service.conf
+    ng install_paths | xargs echo sudo cp -rv
     ng stop
     ng kill
     ng clean
@@ -56,20 +77,20 @@ function ng
     ng install
     ng relart
   else if test $argv[1] = "clean"
-    sudo systemctl clean $ng_service
+    sudo systemctl clean (ng srv:raw)
   else if test $argv[1] = "log"
     set -e argv[1]
-    journalctl -u $ng_service $argv
+    journalctl -u (ng srv:raw) $argv
   else if test $argv[1] = "reload:"
     ng ui::sem:installing Reloading...
     source .local/etc/fish/functions/ng.fish
     ng ui::report:1 OK
   else if test $argv[1] = "socket:activate"
-    sudo mv -v /usr/local/lib/systemd/system/$ng_service.socket{.null,}
+    sudo mv -v /usr/local/lib/systemd/system/(ng srv:raw).socket{.null,}
   else if test $argv[1] = "socket:deactivate"
-    sudo mv -v /usr/local/lib/systemd/system/$ng_service.socket{,.null}
+    sudo mv -v /usr/local/lib/systemd/system/(ng srv:raw).socket{,.null}
   else if test $argv[1] = "socket:activ"
-    if test -r /usr/local/lib/systemd/system/$ng_service.socket
+    if test -r /usr/local/lib/systemd/system/(ng srv:raw).socket
       ng ui::report:1 ACTIVE
     else
       ng ui::report:0 INACTIVE
@@ -124,32 +145,42 @@ function ng
     printf '%s/%s/%s.%s' "/usr/local/lib/systemd" (ng sd_unit_scope:raw) (ng srv:raw) (ng sd_unit_type:raw)
   else if test $argv[1] = "install:path.local"
     printf '%s/%s/%s.%s' (pwd)"/.local/etc/systemd" (ng sd_unit_scope:raw) (ng srv:raw) (ng sd_unit_type:raw)
+  else if test $argv[1] = "test:installed"
+    set -e argv[1]
+
+    set --local dst $argv[1]
+    set --local src $argv[2]
+    set -e argv[1..2]
+
+    test -r $dst
+    and test (cat $dst | openssl sha512 </dev/null) = (cat $src | openssl sha512 </dev/null)
   else if test $argv[1] = "install:test"
-    test -r (ng install:path)
+    ng test:installed (ng install:path) (ng install:path.local)
   else if test $argv[1] = "install:"
     if ng install:test
-      ng ui::report:1 $ng_service INSTALLED
+      ng ui::report:1 (ng srv:raw) INSTALLED
     else
-      ng ui::report:0 $ng_service NOT_INSTALLED
+      ng ui::report:0 (ng srv:raw) NOT_INSTALLED
     end
   else if test $argv[1] = "install."
     if ng install:test
-      ng ui::warn $ng_service REINSTALLING
+      ng ui::warn (ng srv:raw) REINSTALLING
     end
-    ng ui::sem:installing $ng_service Installing...
+    ng ui::sem:installing (ng srv:raw) Installing...
     sudo mkdir -pv (dirname (ng install:path))
-    sudo ln -sv (ng install:path.local) (ng install:path)
+    sudo cp -v (ng install:path.local) (ng install:path)
     ng ui::report:1 OK
   else if test $argv[1] = "install-"
     if ! ng install:test
-      ng ui::warn $ng_service GHOST_UNINSTALLING
+      ng ui::warn (ng srv:raw) GHOST_UNINSTALLING
     end
-    ng ui::sem:installing $ng_service Uninstalling...
+    ng ui::sem:installing (ng srv:raw) Uninstalling...
     sudo rm -rvf (ng install:path)
     ng ui::report:0 DEAD-OK
   else if test $argv[1] = "help"
     for cmd in \
         clean \
+        "config:{,path{,.local},list,test}" \
         help \
         "install{:,.,-}" \
         install \
@@ -158,17 +189,18 @@ function ng
         "relinstall   -> install && reload && restart" \
         reload \
         reload: \
-        "sd_unit_{type,scope}:{,=}" \
         "sd_comp:{,=}" \
+        "sd_unit_{type,scope}:{,=}" \
         "socket:(de)activ(ate)" \
         "srv:{,=}" \
         "s            -> status | cat" \
         "(systemctl) [(re)start|stop|status] $ng_service ARGV..." \
+        "test:installed" \
         "ui::{col,end,report:{0,1},sem:{srv,installing},warn,data}" \
     ;
       printf '[ - ]   %s\n' "$cmd"
     end
   else
-    eval (ng sd_comp:raw)ctl $argv[1] $ng_service $argv[2..]
+    eval (ng sd_comp:raw)ctl $argv[1] (ng srv:raw) $argv[2..]
   end
 end

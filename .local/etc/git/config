@@ -10,3 +10,6 @@
 	reup = remote update
 	d = diff
 	ds = diff --cached
+[user]
+	email = mouchtaris@gmail.com
+	name = Nikos Mouchtaris
