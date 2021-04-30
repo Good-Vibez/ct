@@ -20,13 +20,22 @@ TasksMax=infinity
 # Maximum size of the corefile.
 LimitCORE=infinity
 
-ExecStart=/usr/sbin/varnishd -a :6081 -f /etc/varnish/%N.conf -s malloc,256m
+ExecStart=/usr/sbin/varnishd \
+	-n %t/%N/name \
+	-a :6081 \
+	-f %E/%N/%N.conf \
+	-S none \
+	-s malloc,256m
 ExecReload=/usr/sbin/varnishreload
+
+WorkingDirectory=%t/%N
 
 ConfigurationDirectory=%N
 RuntimeDirectory=%N
 LogsDirectory=%N
 
+User=sd_dyn_varnishd
+Group=sd_dyn_varnishd
 DynamicUser=true
 PrivateDevices=true
 PrivateNetwork=false

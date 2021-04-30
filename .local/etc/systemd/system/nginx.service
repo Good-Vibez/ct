@@ -4,7 +4,7 @@ PartOf=reverse_proxy.target
 [Install]
 [Service]
 Type=forking
-PIDFile=%t/%N/nginx.pid
+PIDFile=%t/%N/%N.pid
 ExecStart=/usr/bin/%N -c %E/%N/%N.conf
 
 ConfigurationDirectory=%N

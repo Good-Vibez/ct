@@ -3,14 +3,14 @@ function ng
   if false
     false
   else if test $argv[1] = "report:"
-    ng sd_comp:
-    ng sd_unit_scope:
-    ng sd_unit_type:
-    ng install:
-    ng socket:activ
-    ng ui::data (ng install:path)
-    ng ui::data (ng install:path.local)
-    ng status
+    printf 'sd component  '; ng sd_comp:
+    printf 'sd unit scope '; ng sd_unit_scope:
+    printf 'sd unit type  '; ng sd_unit_type:
+    printf 'unit          '; ng install:
+    printf 'socket        '; ng socket:activ
+    printf 'install:path  '; ng ui::data (ng install:path)
+    printf 'install:p.loc '; ng ui::data (ng install:path.local)
+    printf 'sctl status   '; ng status
   else if test $argv[1] = "ui::col"
     set -e argv[1]
     set --local fmt (printf '[ \x1b[38;5;%sm%%s\x1b[m ]' $argv[1])
