@@ -47,6 +47,14 @@ function ng
   else if test "$argv[1]" = "ui::sem:installing"
     set -e argv[1]
     ng ui::col 122 "$argv"
+  else if test "$argv[1]" = "ui::process_item"
+    set -e argv[1]
+    ng ui::col 204 "$argv"
+    ng ui::end
+  else if test "$argv[1]" = "ui::note_su"
+    set -e argv[1]
+    ng ui::col 212 "sudo:: $argv"
+    ng ui::end
   else if test "$argv[1]" = "ui::section"
     set -e argv[1]
     echo
@@ -63,11 +71,11 @@ function ng
   else if test "$argv[1]" = "config:path.local"
     printf '%s' ".local/etc/"(ng srv:raw)
   else if test "$argv[1]" = "config:list"
-    find (ng config:path.local) -type f -print0
+    find (ng config:path.local) -type f -printf '%P\000'
   else if test "$argv[1]" = "config:test"
     for item in (ng config:list | string split0)
-      if ! ng install:test {(ng config:path),(ng config:path.local)}/$item
-        ui::warn NOT_INSTALLED $item
+      if ! ng test:installed {(ng config:path),(ng config:path.local)}/$item
+        ng ui::warn NOT_INSTALLED $item
         return 1
       end
     end
@@ -76,6 +84,13 @@ function ng
       ng ui::report:1 CONFIGURED
     else
       ng ui::report:0 UNCONFIGURED
+    end
+  else if test "$argv[1]" = "config."
+    for item in (ng config:list | string split0)
+      if ng meta::loud:test
+        ng ui::process_item $item
+      end
+      ng install:: {(ng config:path),(ng config:path.local)}/$item
     end
   else if test "$argv[1]" = "install_paths"
     printf '%s\n' {.local,}/etc/(ng srv:raw)/ #(ng srv:raw).conf
@@ -172,17 +187,41 @@ function ng
     set -e argv[1..2]
 
     if ! test -r $dst
-      ng ui::failxplain "Not readable: $dst"
+      if ng meta::loud:test
+        ng ui::failxplain "Not readable: $dst"
+      end
       return 1
     end
     set --local sum_dst (cat $dst | ng sum::stdin)
     set --local sum_src (cat $src | ng sum::stdin)
     if ! test $sum_src = $sum_dst
-      ng ui::failxplain "Badsums: $sum_dst != $sum_src"
+      if ng meta::loud:test
+        ng ui::failxplain "Badsums: $sum_dst != $sum_src"
+      end
       return 1
     end
     if ng meta::loud:test
       ng ui::sem:shadow "🔒$sum_src"
+    end
+  else if test "$argv[1]" = "install::"
+    set -e argv[1]
+
+    set --local dst "$argv[1]"
+    set --local src $argv[2]
+    set -e argv[1..2]
+
+    if ng meta::loud:test
+      ng ui::sem:shadow "$src -> $dst"
+      ng ui::end
+    end
+    if ng test:installed $src $dst
+      ng ui::warn "RE_INSTALLING $src"
+    end
+    if test (string sub -s 1 -e 1 $dst) = "/"
+      ng ui::note_su $dst
+      sudo cp -v $src $dst
+    else
+      cp -v $src $dst
     end
   else if test "$argv[1]" = "install:test"
     ng test:installed (ng install:path) (ng install:path.local)
@@ -237,7 +276,7 @@ function ng
   else if test "$argv[1]" = "help"
     for cmd in \
         clean \
-        "config:{,path{,.local},list,test}" \
+        "config:{,.,path{,.local},list,test}" \
         help \
         "install{:,.,-}" \
         install \
@@ -255,7 +294,8 @@ function ng
         "sum::stdin" \
         "(systemctl) [(re)start|stop|status] $ng_service ARGV..." \
         "test:installed" \
-        "ui::{col,end,section,report:{0,1},sem:{srv,installing,shadow},warn,failxplain,data}" \
+        "install::" \
+        "ui::{col,end,process_item,note_su,section,report:{0,1},sem:{srv,installing,shadow},warn,failxplain,data}" \
     ;
       printf '[ - ]   %s\n' "$cmd"
     end
