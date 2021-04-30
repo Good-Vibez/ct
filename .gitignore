@@ -1,11 +1,12 @@
 /.local/cache/
-/.local/etc/VirtualBox/
-/.local/etc/cargo/.package-cache
 /.local/etc/cargo/git/
+/.local/etc/cargo/.package-cache
 /.local/etc/cargo/registry/
 /.local/etc/fish/
+/.local/etc/htop/
 /.local/etc/irb/
 /.local/etc/rc.env
+/.local/etc/VirtualBox/
 /.local/share/direnv/
 /.local/share/fish/
 /.local/share/nvim/plugged

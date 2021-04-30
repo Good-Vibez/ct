@@ -25,8 +25,11 @@ ExecStart=/usr/sbin/varnishd \
 	-a :6081 \
 	-f %E/%N/%N.conf \
 	-S none \
-	-s malloc,256m
-ExecReload=/usr/sbin/varnishreload
+	-s malloc,8G \
+	-p default_keep=829440000 \
+	-t 829440000
+ExecReload=/usr/sbin/varnishreload \
+	-n %t/%N/name
 
 WorkingDirectory=%t/%N
 
@@ -34,19 +37,19 @@ ConfigurationDirectory=%N
 RuntimeDirectory=%N
 LogsDirectory=%N
 
-User=sd_dyn_varnishd
-Group=sd_dyn_varnishd
-DynamicUser=true
-PrivateDevices=true
-PrivateNetwork=false
-PrivateIPC=true
-PrivateUsers=true
-ProtectHostname=true
-ProtectClock=true
-ProtectKernelTunables=true
-ProtectKernelModules=true
-ProtectKernelLogs=true
-ProtectControlGroups=true
-RestrictAddressFamilies=AF_INET
-LockPersonality=true
-PrivateMounts=true
+User=vagrant
+Group=vagrant
+#DynamicUser=true
+#PrivateDevices=true
+#PrivateNetwork=false
+#PrivateIPC=false
+#PrivateUsers=true
+#ProtectHostname=true
+#ProtectClock=true
+#ProtectKernelTunables=true
+#ProtectKernelModules=true
+#ProtectKernelLogs=true
+#ProtectControlGroups=true
+#RestrictAddressFamilies=AF_INET
+#LockPersonality=true
+#PrivateMounts=false
