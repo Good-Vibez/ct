@@ -7,8 +7,8 @@ Exec (output: Display,
     args: [
         "-f", "dev_exec/::sanctioned/std::to_json",
         "-ah", "val", [
-            //"vm.arch",
-            "vm.arch0",
+            "vm.arch",
+            "vm.ubuntu",
         ],
     ],
 ),

@@ -11,9 +11,7 @@ WriteValue ("/dev/stdout",
             r##"
                 .
                 |   ."null" |= {
-                        # "alpine-3",
-                        "arch-2",
-                        "ubuntu-1",
+                        "arch",
                     }
                 |   .vagrant |= {
                         # "arch-boot",

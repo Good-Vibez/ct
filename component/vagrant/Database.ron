@@ -59,14 +59,14 @@ Database (
             ],
             provider: "vagrant_vbox",
         ),
-        "vm.arch0": (
-            os: "arch",
+        "vm.ubuntu": (
+            os: "ubuntu",
             size: "medium",
             network_allocation: "alloc-2",
             roles: [
                 "0/consul_server/1",
             ],
-            provider: "vagrant_docker",
+            provider: "vagrant_vbox",
         ),
     },
 )
