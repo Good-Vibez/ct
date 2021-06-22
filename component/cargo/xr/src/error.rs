@@ -18,6 +18,12 @@ xError! {
     Utf8_ = string::FromUtf8Error
 }
 
+impl xerr::v2::ErrorShow for ErrorKind {
+    fn show(self) -> String {
+        format!("{:?}", self)
+    }
+}
+
 use super::{
     io,
     string,

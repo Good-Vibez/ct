@@ -5,7 +5,7 @@ xError! {
     Utf8 = std::str::Utf8Error
     Utf8_ = std::string::FromUtf8Error
     Json = json::Error
-    Xc = xc::lib::lib::Error
+    Xc = xc::Error
     Var = std::env::VarError
 }
 

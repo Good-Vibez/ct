@@ -343,7 +343,7 @@ impl<'a, 'd> Eval<'d> for &'a Stmt<'d> {
                     argvals.push(arg.to_owned());
                 }
                 let mut stdout = Vec::<u8>::new();
-                use xc::lib::lib::app;
+                use xc::app;
 
                 if let Some(cwd) = cwd {
                     match stdin {
