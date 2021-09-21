@@ -33,11 +33,8 @@ where
                 let env_file_path =
                     te!(env_file_path, "Missing argument to --env-file")
                         .as_ref();
-                let env_file = std::fs::File::open(env_file_path)?;
-                match serde_yaml::from_reader::<_, EnvFile>(&env_file) {
-                    Ok(envs) => opts.envs = envs,
-                    Err(err) => println!("{:?}", err),
-                }
+                let env_file = fs::File::open(env_file_path)?;
+                opts.envs = te!(serde_yaml::from_reader::<_, EnvFile>(&env_file), "Error loading yaml");
             }
             Some("--env-context") => {
                 let env_context = i.next();
