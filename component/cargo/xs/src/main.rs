@@ -88,6 +88,7 @@ use {
     error::{err, te, xerr, Error, Result},
     input::Input,
     serde_json as json,
+    serde_yaml as yaml,
     std::{
         borrow::{Borrow, BorrowMut, Cow},
         collections::{
