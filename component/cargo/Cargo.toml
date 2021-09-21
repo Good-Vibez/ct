@@ -4,6 +4,7 @@ members = [
     './xr',
     './xr-dyn',
     './xr-parse',
+    './xr-parse-macro',
     './xr-token',
     './xs',
 ]
@@ -18,6 +19,9 @@ path = './xr-dyn'
 
 [patch.crates-io.xr-parse]
 path = './xr-parse'
+
+[patch.crates-io.xr-parse-macro]
+path = './xr-parse-macro'
 
 [patch.crates-io.xr-token]
 path = './xr-token'
