@@ -9,6 +9,8 @@ where
         eval: true,
         export_ast: false,
         named_args: <_>::default(),
+        envs: <_>::default(),
+        env_ctx: &"default",
         err_server: <_>::default(),
         err_server_clear: <_>::default(),
         err_server_quit: <_>::default(),
@@ -25,6 +27,24 @@ where
             }
             Some("--error-server-quit") => {
                 opts.err_server_quit = true;
+            }
+            Some("--env-file") => {
+                let env_file_path = i.next();
+                let env_file_path =
+                    te!(env_file_path, "Missing argument to --env-file")
+                        .as_ref();
+                let env_file = std::fs::File::open(env_file_path)?;
+                match serde_yaml::from_reader::<_, EnvFile>(&env_file) {
+                    Ok(envs) => opts.envs = envs,
+                    Err(err) => println!("{:?}", err),
+                }
+            }
+            Some("--env-context") => {
+                let env_context = i.next();
+                let env_context =
+                    te!(env_context, "Missing argument to --env-context")
+                        .as_ref();
+                opts.env_ctx = env_context.as_ref();
             }
             Some("-f") => {
                 let filepath = i.next();
@@ -64,11 +84,15 @@ pub struct Options<'a> {
     pub eval: bool,
     pub export_ast: bool,
     pub named_args: Map<&'a str, &'a str>,
+    pub envs: EnvFile,
+    pub env_ctx: &'a str,
     pub err_server: bool,
     pub err_server_clear: bool,
     pub err_server_quit: bool,
     pub json_input_script: bool,
 }
+
+use crate::ast::EnvFile;
 
 use super::*;
 use std::format as f;

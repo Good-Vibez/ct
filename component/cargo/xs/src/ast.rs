@@ -48,6 +48,20 @@ pub enum Expr<'d> {
     List(Vec<Expr<'d>>),
 }
 
+#[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
+pub struct EnvMapValue {
+    pub description: Option<String>,
+    pub value: String,
+}
+#[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
+#[serde(untagged)]
+pub enum EnvValue {
+    Str(String),
+    Map(EnvMapValue),
+}
+
+pub type EnvFile = HashMap<String, HashMap<String, EnvValue>>;
+
 #[derive(
     Debug, Clone, serde::Deserialize, serde::Serialize, wind::EnumDefault,
 )]
@@ -76,5 +90,7 @@ pub enum Io<'d> {
     Tty,
     Source(&'d str),
 }
+
+use std::collections::HashMap;
 
 use super::*;
