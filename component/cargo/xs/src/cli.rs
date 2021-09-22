@@ -9,6 +9,8 @@ where
         eval: true,
         export_ast: false,
         named_args: <_>::default(),
+        envs: <_>::default(),
+        env_ctx: &"default",
         err_server: <_>::default(),
         err_server_clear: <_>::default(),
         err_server_quit: <_>::default(),
@@ -25,6 +27,25 @@ where
             }
             Some("--error-server-quit") => {
                 opts.err_server_quit = true;
+            }
+            Some("--env-file") => {
+                let env_file_path = i.next();
+                let env_file_path =
+                    te!(env_file_path, "Missing argument to --env-file")
+                        .as_ref();
+                let env_file =
+                    te!(fs::File::open(env_file_path), "Opening env file");
+                opts.envs = te!(
+                    yaml::from_reader(&env_file),
+                    "Parsing env file as yaml"
+                );
+            }
+            Some("--env-context") => {
+                let env_context = i.next();
+                let env_context =
+                    te!(env_context, "Missing argument to --env-context")
+                        .as_ref();
+                opts.env_ctx = env_context.as_ref();
             }
             Some("-f") => {
                 let filepath = i.next();
@@ -64,11 +85,27 @@ pub struct Options<'a> {
     pub eval: bool,
     pub export_ast: bool,
     pub named_args: Map<&'a str, &'a str>,
+    pub envs: EnvFile,
+    pub env_ctx: &'a str,
     pub err_server: bool,
     pub err_server_clear: bool,
     pub err_server_quit: bool,
     pub json_input_script: bool,
 }
+
+#[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
+pub struct EnvMapValue {
+    pub description: Option<String>,
+    pub value: String,
+}
+#[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
+#[serde(untagged)]
+pub enum EnvValue {
+    Str(String),
+    Map(EnvMapValue),
+}
+
+pub type EnvFile = Map<String, Map<String, EnvValue>>;
 
 use super::*;
 use std::format as f;

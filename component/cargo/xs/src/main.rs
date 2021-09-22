@@ -4,7 +4,19 @@ fn main() {
     process::exit(error::main(|| {
         let args: Vec<String> = env::args().collect();
         log::debug!("Command Line Arguments: {:#?}", args);
-        let opts = te!(cli::parse_args(&args));
+        let mut opts = te!(cli::parse_args(&args));
+
+        // reads variables from env file
+        // variables from cli (-ah) always have higher priority
+        // only insert the ones missing
+        if let Some(ctx) = opts.envs.get(opts.env_ctx) {
+            for (key, value) in ctx.into_iter() {
+                opts.named_args.entry(key).or_insert(match value {
+                    cli::EnvValue::Str(str) => str,
+                    cli::EnvValue::Map(map) => &map.value,
+                });
+            }
+        }
 
         let mut inpt = te!(opts.input.open());
 
@@ -24,7 +36,10 @@ fn main() {
             te!(io::Read::read_to_string(&mut inpt, &mut source));
 
             let script: ast::Script = if opts.json_input_script {
-                te!(json::from_str(&source), format!("Source Json Script Error"))
+                te!(
+                    json::from_str(&source),
+                    format!("Source Json Script Error")
+                )
             } else {
                 te!(ron::from_str(&source), format!("Source Ron Script Error"))
             };
@@ -77,6 +92,7 @@ use {
     },
     input::Input,
     serde_json as json,
+    serde_yaml as yaml,
     std::{
         borrow::{
             Borrow,

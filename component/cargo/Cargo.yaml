@@ -12,6 +12,7 @@ module:
       - ron
       - serde
       - serde_json
+      - serde_yaml
       - termcolor
       - wind
       - xerr

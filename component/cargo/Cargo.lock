@@ -666,6 +666,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "xr-parse-macro"
+version = "0.0.1"
+dependencies = [
+ "xr-parse",
+]
+
+[[package]]
 name = "xr-token"
 version = "0.0.1"
 
@@ -678,6 +685,7 @@ dependencies = [
  "ron",
  "serde",
  "serde_json",
+ "serde_yaml",
  "termcolor",
  "wind",
  "xc",
