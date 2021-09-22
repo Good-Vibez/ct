@@ -1,5 +1,3 @@
-use crate::ast::EnvValue;
-
 fn main() {
     pretty_env_logger::init();
 
@@ -14,8 +12,8 @@ fn main() {
         if let Some(ctx) = opts.envs.get(opts.env_ctx) {
             for (key, value) in ctx.into_iter() {
                 opts.named_args.entry(key).or_insert(match value {
-                    EnvValue::Str(str) => str,
-                    EnvValue::Map(map) => &map.value,
+                    cli::EnvValue::Str(str) => str,
+                    cli::EnvValue::Map(map) => &map.value,
                 });
             }
         }
@@ -85,17 +83,33 @@ mod output;
 use {
     clear::clearing,
     engine::Engine,
-    error::{err, te, xerr, Error, Result},
+    error::{
+        err,
+        te,
+        xerr,
+        Error,
+        Result,
+    },
     input::Input,
     serde_json as json,
     serde_yaml as yaml,
     std::{
-        borrow::{Borrow, BorrowMut, Cow},
+        borrow::{
+            Borrow,
+            BorrowMut,
+            Cow,
+        },
         collections::{
-            btree_map::{BTreeMap as Map, Entry},
+            btree_map::{
+                BTreeMap as Map,
+                Entry,
+            },
             VecDeque as Deq,
         },
-        convert::{TryFrom, TryInto},
+        convert::{
+            TryFrom,
+            TryInto,
+        },
         env,
         fmt,
         fs,

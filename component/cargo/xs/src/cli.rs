@@ -33,8 +33,12 @@ where
                 let env_file_path =
                     te!(env_file_path, "Missing argument to --env-file")
                         .as_ref();
-                let env_file = fs::File::open(env_file_path)?;
-                opts.envs = te!(serde_yaml::from_reader::<_, EnvFile>(&env_file), "Error loading yaml");
+                let env_file =
+                    te!(fs::File::open(env_file_path), "Opening env file");
+                opts.envs = te!(
+                    yaml::from_reader(&env_file),
+                    "Parsing env file as yaml"
+                );
             }
             Some("--env-context") => {
                 let env_context = i.next();
@@ -89,7 +93,19 @@ pub struct Options<'a> {
     pub json_input_script: bool,
 }
 
-use crate::ast::EnvFile;
+#[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
+pub struct EnvMapValue {
+    pub description: Option<String>,
+    pub value: String,
+}
+#[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
+#[serde(untagged)]
+pub enum EnvValue {
+    Str(String),
+    Map(EnvMapValue),
+}
+
+pub type EnvFile = Map<String, Map<String, EnvValue>>;
 
 use super::*;
 use std::format as f;
